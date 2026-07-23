@@ -5,11 +5,11 @@ Ko‘p ijarali (multi-tenant) mebel katalogi uchun frontend.
 - Nuxt 4 + Vue 3 + TypeScript
 - Mobil-birinchi katalog, mahsulot sahifasi, buyurtma formasi va demo admin sahifasi
 - Keyinchalik shu URL Telegram Mini App ichida ochiladi
-- Backend alohida repoda: `catalog-backend`
+- Backend alohida repoda: [catalog-backend](https://github.com/boburbekt/catalog-backend)
 
 ## 1. Ishga tushirish
 
-Avval backend'ni ishga tushiring (`catalog-backend` repo, `docker compose up --build`), so‘ng:
+Avval backend'ni ishga tushiring ([catalog-backend](https://github.com/boburbekt/catalog-backend) repo, `docker compose up --build`), so‘ng:
 
 ```bash
 npm install
