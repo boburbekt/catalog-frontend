@@ -14,7 +14,7 @@ interface Product {
 }
 
 const route = useRoute()
-const api = useApi()
+const api = usePublicApi()
 const { resolveMediaUrl } = useMedia()
 const shopSlug = String(route.params.shopSlug)
 const productSlug = String(route.params.productSlug)

@@ -19,7 +19,7 @@ interface Catalog {
 const PAGE_SIZE = 24
 
 const route = useRoute()
-const api = useApi()
+const api = usePublicApi()
 const { resolveMediaUrl } = useMedia()
 const search = ref('')
 const category = ref('')

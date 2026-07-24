@@ -26,7 +26,7 @@ interface OrderList {
   offset: number
 }
 
-const api = useApi()
+const api = useAdminApi()
 const token = useAdminToken()
 
 const orders = ref<Order[]>([])

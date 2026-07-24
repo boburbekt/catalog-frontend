@@ -39,7 +39,7 @@ interface ProductForm {
   position: number
 }
 
-const api = useApi()
+const api = useAdminApi()
 const token = useAdminToken()
 const { resolveMediaUrl } = useMedia()
 

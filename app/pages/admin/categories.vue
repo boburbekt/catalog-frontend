@@ -14,7 +14,7 @@ interface CategoryForm {
   is_active: boolean
 }
 
-const api = useApi()
+const api = useAdminApi()
 const token = useAdminToken()
 
 const categories = ref<Category[]>([])
