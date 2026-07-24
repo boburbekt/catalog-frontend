@@ -11,24 +11,37 @@ interface Catalog {
     categories: Category[]
   }
   products: Product[]
+  total: number
+  limit: number
+  offset: number
 }
+
+const PAGE_SIZE = 24
 
 const route = useRoute()
 const api = useApi()
 const search = ref('')
 const category = ref('')
+const limit = ref(PAGE_SIZE)
 const shopSlug = computed(() => String(route.params.shopSlug))
+
+// Filtr o‘zgarganda ro‘yxat boshidan boshlansin.
+watch([category, search], () => { limit.value = PAGE_SIZE })
 
 const { data: catalog, error, status } = await useAsyncData(
   `catalog:${shopSlug.value}`,
   () => api<Catalog>(`/public/shops/${shopSlug.value}`, {
     query: {
       category: category.value || undefined,
-      search: search.value || undefined
+      search: search.value || undefined,
+      source: route.query.source || undefined,
+      limit: limit.value
     }
   }),
-  { watch: [category, search] }
+  { watch: [category, search, limit] }
 )
+
+const hasMore = computed(() => !!catalog.value && catalog.value.products.length < catalog.value.total)
 
 useSeoMeta({
   title: () => catalog.value ? `${catalog.value.business.name} — onlayn katalog` : 'Mebel katalogi',
@@ -57,7 +70,7 @@ useSeoMeta({
         <p>Telefon orqali tez ochiladi. Har bir mahsulotda narx, o‘lcham va material ko‘rsatilgan.</p>
       </div>
       <div class="hero-stat">
-        <strong>{{ catalog.products.length }}</strong>
+        <strong>{{ catalog.total }}</strong>
         <span>mahsulot topildi</span>
       </div>
     </section>
@@ -82,6 +95,12 @@ useSeoMeta({
 
     <section class="shell product-grid">
       <ProductCard v-for="product in catalog.products" :key="product.id" :product="product" :shop-slug="shopSlug" />
+    </section>
+
+    <section v-if="hasMore" class="shell load-more">
+      <button class="secondary-button" @click="limit += PAGE_SIZE">
+        Ko‘proq ko‘rsatish ({{ catalog.products.length }} / {{ catalog.total }})
+      </button>
     </section>
 
     <section v-if="catalog.products.length === 0" class="empty-state shell">

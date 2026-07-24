@@ -18,9 +18,14 @@ const api = useApi()
 const shopSlug = String(route.params.shopSlug)
 const productSlug = String(route.params.productSlug)
 
+// QR/reklama havolalaridagi `?source=` backendga uzatiladi — statistika shu asosda yig‘iladi.
+const source = computed(() => (route.query.source as string) || undefined)
+
 const { data: product, error } = await useAsyncData(
   `product:${shopSlug}:${productSlug}`,
-  () => api<Product>(`/public/shops/${shopSlug}/products/${productSlug}`)
+  () => api<Product>(`/public/shops/${shopSlug}/products/${productSlug}`, {
+    query: { source: source.value }
+  })
 )
 
 const form = reactive({ customer_name: '', customer_phone: '', quantity: 1, comment: '' })
@@ -38,6 +43,7 @@ const submitOrder = async () => {
   try {
     const result = await api<{ id: number; message: string }>(`/public/shops/${shopSlug}/orders`, {
       method: 'POST',
+      query: { source: source.value },
       body: { ...form, product_id: product.value.id }
     })
     successMessage.value = `${result.message}. Buyurtma №${result.id}`
