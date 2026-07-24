@@ -21,10 +21,23 @@ const PAGE_SIZE = 24
 const route = useRoute()
 const api = usePublicApi()
 const { resolveMediaUrl } = useMedia()
+// `searchInput` — inputga bog‘langan; `search` — debounce'dan keyin serverga so‘rov uchun ishlatiladi.
+const searchInput = ref('')
 const search = ref('')
 const category = ref('')
 const limit = ref(PAGE_SIZE)
 const shopSlug = computed(() => String(route.params.shopSlug))
+// QR/reklama manbasi — mahsulot havolalari va tashrif eventida saqlanadi.
+const source = computed(() => (route.query.source as string) || undefined)
+
+// Qidiruvga 400 ms debounce — har harfda emas, foydalanuvchi to‘xtagach so‘rov ketadi.
+const SEARCH_DEBOUNCE_MS = 400
+let debounceTimer: ReturnType<typeof setTimeout> | undefined
+watch(searchInput, (value) => {
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => { search.value = value }, SEARCH_DEBOUNCE_MS)
+})
+onBeforeUnmount(() => clearTimeout(debounceTimer))
 
 // Filtr o‘zgarganda ro‘yxat boshidan boshlansin.
 watch([category, search], () => { limit.value = PAGE_SIZE })
@@ -35,12 +48,20 @@ const { data: catalog, error, status } = await useAsyncData(
     query: {
       category: category.value || undefined,
       search: search.value || undefined,
-      source: route.query.source || undefined,
+      source: source.value,
       limit: limit.value
     }
   }),
   { watch: [category, search, limit] }
 )
+
+// Tashrif faqat bir marta yoziladi: qidiruv/kategoriya/ko‘proq ko‘rsatish tashrif yozmaydi.
+onMounted(() => {
+  api(`/public/shops/${shopSlug.value}/visits`, {
+    method: 'POST',
+    body: { source: source.value ?? null, path: route.path }
+  }).catch(() => {})
+})
 
 const hasMore = computed(() => !!catalog.value && catalog.value.products.length < catalog.value.total)
 
@@ -79,7 +100,7 @@ useSeoMeta({
     <section class="shell controls">
       <label class="search-box">
         <span>Qidiruv</span>
-        <input v-model.trim="search" type="search" placeholder="Masalan: divan">
+        <input v-model.trim="searchInput" type="search" placeholder="Masalan: divan">
       </label>
       <div class="category-list">
         <button :class="{ active: category === '' }" @click="category = ''">Barchasi</button>
@@ -95,7 +116,7 @@ useSeoMeta({
     </section>
 
     <section class="shell product-grid">
-      <ProductCard v-for="product in catalog.products" :key="product.id" :product="product" :shop-slug="shopSlug" />
+      <ProductCard v-for="product in catalog.products" :key="product.id" :product="product" :shop-slug="shopSlug" :source="source" />
     </section>
 
     <section v-if="hasMore" class="shell load-more">

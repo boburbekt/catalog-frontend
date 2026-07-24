@@ -29,12 +29,28 @@ const { data: product, error } = await useAsyncData(
   })
 )
 
-const form = reactive({ customer_name: '', customer_phone: '', quantity: 1, comment: '' })
+// `honeypot` — yashirin maydon (bot to‘ldiradi); `consent` — majburiy rozilik.
+const form = reactive({ customer_name: '', customer_phone: '', quantity: 1, comment: '', honeypot: '', consent: false })
 const sending = ref(false)
 const successMessage = ref('')
 const formError = ref('')
 
+// Katalogga qaytish havolasida ham manba saqlanadi.
+const backTo = computed(() => ({
+  path: `/${shopSlug}`,
+  query: source.value ? { source: source.value } : {}
+}))
+
 const money = (value: string | number) => new Intl.NumberFormat('uz-UZ').format(Number(value)) + ' so‘m'
+
+// Mahsulot ochilganda bir marta tashrif yoziladi (view_count backendda oshadi).
+onMounted(() => {
+  if (!product.value) return
+  api(`/public/shops/${shopSlug}/visits`, {
+    method: 'POST',
+    body: { product_id: product.value.id, source: source.value ?? null, path: route.path }
+  }).catch(() => {})
+})
 
 const submitOrder = async () => {
   if (!product.value) return
@@ -52,6 +68,8 @@ const submitOrder = async () => {
     form.customer_phone = ''
     form.quantity = 1
     form.comment = ''
+    form.honeypot = ''
+    form.consent = false
   } catch (e: any) {
     formError.value = e?.data?.detail || 'Buyurtmani yuborib bo‘lmadi.'
   } finally {
@@ -67,7 +85,7 @@ useSeoMeta({
 
 <template>
   <main v-if="product" class="product-page shell">
-    <NuxtLink :to="`/${shopSlug}`" class="back-link">← Katalogga qaytish</NuxtLink>
+    <NuxtLink :to="backTo" class="back-link">← Katalogga qaytish</NuxtLink>
 
     <section class="product-detail">
       <div class="detail-image-wrap">
@@ -101,7 +119,18 @@ useSeoMeta({
         <label>Telefon<input v-model.trim="form.customer_phone" required minlength="7" placeholder="+998 90 123 45 67"></label>
         <label>Miqdor<input v-model.number="form.quantity" required type="number" min="1" max="99"></label>
         <label>Izoh<textarea v-model.trim="form.comment" rows="3" placeholder="Rang yoki yetkazib berish bo‘yicha savol"></textarea></label>
-        <button class="primary-button full" :disabled="sending">{{ sending ? 'Yuborilmoqda…' : 'Buyurtma yuborish' }}</button>
+
+        <!-- Honeypot: haqiqiy foydalanuvchi ko‘rmaydi va to‘ldirmaydi; bot to‘ldirsa buyurtma rad etiladi. -->
+        <div class="hp-field" aria-hidden="true">
+          <label>Veb-sayt<input v-model="form.honeypot" type="text" tabindex="-1" autocomplete="off"></label>
+        </div>
+
+        <label class="consent-label full">
+          <input v-model="form.consent" type="checkbox" required>
+          <span>Telefon raqamimni yuborish orqali buyurtma bo‘yicha men bilan bog‘lanishga roziman.</span>
+        </label>
+
+        <button class="primary-button full" :disabled="sending || !form.consent">{{ sending ? 'Yuborilmoqda…' : 'Buyurtma yuborish' }}</button>
         <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
         <p v-if="formError" class="error-message">{{ formError }}</p>
       </form>
@@ -112,3 +141,28 @@ useSeoMeta({
     <p>{{ error?.message || 'Mahsulot yuklanmoqda…' }}</p>
   </main>
 </template>
+
+<style scoped>
+/* Honeypot ekrandan tashqarida — foydalanuvchi ko‘rmaydi, lekin DOM'da mavjud (botlar to‘ldiradi). */
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.consent-label input {
+  width: auto;
+  margin-top: 3px;
+  flex: none;
+}
+.consent-label span { line-height: 1.4; }
+</style>
