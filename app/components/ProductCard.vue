@@ -21,6 +21,8 @@ const props = defineProps<{
   shopSlug: string
 }>()
 
+const { resolveMediaUrl } = useMedia()
+
 const money = (value: string | number) =>
   new Intl.NumberFormat('uz-UZ').format(Number(value)) + ' so‘m'
 </script>
@@ -29,7 +31,7 @@ const money = (value: string | number) =>
   <NuxtLink :to="`/${props.shopSlug}/product/${props.product.slug}`" class="product-card">
     <div class="product-image-wrap">
       <img
-        :src="props.product.image_url || 'https://placehold.co/800x600?text=Mebel'"
+        :src="resolveMediaUrl(props.product.image_url) || 'https://placehold.co/800x600?text=Mebel'"
         :alt="props.product.name"
         class="product-image"
         loading="lazy"

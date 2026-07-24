@@ -20,6 +20,7 @@ const PAGE_SIZE = 24
 
 const route = useRoute()
 const api = useApi()
+const { resolveMediaUrl } = useMedia()
 const search = ref('')
 const category = ref('')
 const limit = ref(PAGE_SIZE)
@@ -53,7 +54,7 @@ useSeoMeta({
   <main v-if="catalog" class="catalog-page">
     <header class="shop-header shell">
       <div class="brand-block">
-        <img v-if="catalog.business.logo_url" :src="catalog.business.logo_url" :alt="catalog.business.name" class="shop-logo">
+        <img v-if="catalog.business.logo_url" :src="resolveMediaUrl(catalog.business.logo_url)" :alt="catalog.business.name" class="shop-logo">
         <div>
           <span class="eyebrow">Onlayn katalog</span>
           <h1>{{ catalog.business.name }}</h1>

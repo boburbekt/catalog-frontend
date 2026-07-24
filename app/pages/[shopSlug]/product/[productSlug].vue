@@ -15,6 +15,7 @@ interface Product {
 
 const route = useRoute()
 const api = useApi()
+const { resolveMediaUrl } = useMedia()
 const shopSlug = String(route.params.shopSlug)
 const productSlug = String(route.params.productSlug)
 
@@ -70,7 +71,7 @@ useSeoMeta({
 
     <section class="product-detail">
       <div class="detail-image-wrap">
-        <img :src="product.image_url || 'https://placehold.co/1000x800?text=Mebel'" :alt="product.name" class="detail-image">
+        <img :src="resolveMediaUrl(product.image_url) || 'https://placehold.co/1000x800?text=Mebel'" :alt="product.name" class="detail-image">
       </div>
 
       <div class="detail-content">
