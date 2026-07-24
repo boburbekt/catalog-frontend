@@ -1,20 +1,5 @@
 <script setup lang="ts">
-interface Category {
-  id: number
-  name: string
-  slug: string
-}
-
-interface Product {
-  id: number
-  name: string
-  slug: string
-  price: string | number
-  old_price?: string | number | null
-  image_url?: string | null
-  availability: string
-  category?: Category | null
-}
+import type { Product } from '~/types/api'
 
 const props = defineProps<{
   product: Product
@@ -29,9 +14,6 @@ const to = computed(() => ({
   path: `/${props.shopSlug}/product/${props.product.slug}`,
   query: props.source ? { source: props.source } : {}
 }))
-
-const money = (value: string | number) =>
-  new Intl.NumberFormat('uz-UZ').format(Number(value)) + ' so‘m'
 </script>
 
 <template>

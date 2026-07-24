@@ -1,17 +1,5 @@
 <script setup lang="ts">
-interface Product {
-  id: number
-  name: string
-  slug: string
-  description?: string | null
-  price: string
-  old_price?: string | null
-  material?: string | null
-  dimensions?: string | null
-  image_url?: string | null
-  availability: string
-  category?: { name: string; slug: string } | null
-}
+import type { Product } from '~/types/api'
 
 const route = useRoute()
 const api = usePublicApi()
@@ -40,8 +28,6 @@ const backTo = computed(() => ({
   path: `/${shopSlug}`,
   query: source.value ? { source: source.value } : {}
 }))
-
-const money = (value: string | number) => new Intl.NumberFormat('uz-UZ').format(Number(value)) + ' so‘m'
 
 // Mahsulot ochilganda bir marta tashrif yoziladi (view_count backendda oshadi).
 onMounted(() => {
@@ -77,9 +63,31 @@ const submitOrder = async () => {
   }
 }
 
+// SEO: absolute canonical + OG/Twitter. Manba (`?source=`) canonical'ga kiritilmaydi.
+const config = useRuntimeConfig()
+const siteUrl = (config.public.siteUrl as string).replace(/\/$/, '')
+const canonicalUrl = computed(() => `${siteUrl}/${shopSlug}/product/${productSlug}`)
+const ogImage = computed(() => resolveMediaUrl(product.value?.image_url) || undefined)
+const pageTitle = computed(() =>
+  product.value ? `${product.value.name} — narx va tavsif` : 'Mahsulot'
+)
+const pageDescription = computed(() => product.value?.description || 'Mahsulot tafsiloti')
+
+useHead({
+  link: [{ rel: 'canonical', href: canonicalUrl }]
+})
 useSeoMeta({
-  title: () => product.value ? `${product.value.name} — narx va tavsif` : 'Mahsulot',
-  description: () => product.value?.description || 'Mahsulot tafsiloti'
+  title: pageTitle,
+  description: pageDescription,
+  ogType: 'website',
+  ogTitle: pageTitle,
+  ogDescription: pageDescription,
+  ogImage: ogImage,
+  ogUrl: canonicalUrl,
+  twitterCard: 'summary_large_image',
+  twitterTitle: pageTitle,
+  twitterDescription: pageDescription,
+  twitterImage: ogImage
 })
 </script>
 

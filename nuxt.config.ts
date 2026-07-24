@@ -5,7 +5,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8000/api',
-      mediaBase: process.env.NUXT_PUBLIC_MEDIA_BASE || 'http://localhost:8000'
+      mediaBase: process.env.NUXT_PUBLIC_MEDIA_BASE || 'http://localhost:8000',
+      // Public sahifalarning absolute manzili (canonical, OG, sitemap, robots uchun).
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000'
     }
   },
   app: {

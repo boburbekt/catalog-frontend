@@ -1,11 +1,5 @@
 <script setup lang="ts">
-interface Category {
-  id: number
-  name: string
-  slug: string
-  position: number
-  is_active: boolean
-}
+import type { Category } from '~/types/api'
 
 interface CategoryForm {
   name: string
@@ -16,6 +10,9 @@ interface CategoryForm {
 
 const api = useAdminApi()
 const token = useAdminToken()
+
+// Admin sahifalari qidiruv tizimlariga tushmasligi kerak.
+useHead({ meta: [{ name: 'robots', content: 'noindex, nofollow' }] })
 
 const categories = ref<Category[]>([])
 const loading = ref(false)

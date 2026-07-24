@@ -1,33 +1,11 @@
 <script setup lang="ts">
-interface OrderItem {
-  product_name: string
-  quantity: number
-  unit_price: string
-  line_total: string
-}
-
-interface Order {
-  id: number
-  customer_name: string
-  customer_phone: string
-  comment?: string | null
-  status: string
-  source: string
-  created_at: string
-  notified_at?: string | null
-  items: OrderItem[]
-  total: string
-}
-
-interface OrderList {
-  orders: Order[]
-  total: number
-  limit: number
-  offset: number
-}
+import type { Order, OrderList, OrderStatus } from '~/types/api'
 
 const api = useAdminApi()
 const token = useAdminToken()
+
+// Admin sahifalari qidiruv tizimlariga tushmasligi kerak.
+useHead({ meta: [{ name: 'robots', content: 'noindex, nofollow' }] })
 
 const orders = ref<Order[]>([])
 const totalCount = ref(0)
@@ -47,14 +25,14 @@ const detail = ref<Order | null>(null)
 const detailLoading = ref(false)
 const busyId = ref<number | null>(null)
 
-const STATUSES = [
-  { value: 'new', label: 'Yangi' },
-  { value: 'contacted', label: 'Bog‘lanildi' },
-  { value: 'confirmed', label: 'Tasdiqlangan' },
-  { value: 'cancelled', label: 'Bekor qilingan' }
+// Dropdown opsiyalari uchun (value + label); yorliqning o‘zi `orderStatusLabel()` helperidan.
+const STATUSES: { value: OrderStatus, label: string }[] = [
+  { value: 'new', label: orderStatusLabel('new') },
+  { value: 'contacted', label: orderStatusLabel('contacted') },
+  { value: 'confirmed', label: orderStatusLabel('confirmed') },
+  { value: 'cancelled', label: orderStatusLabel('cancelled') }
 ]
-const statusLabel = (value: string) =>
-  STATUSES.find((s) => s.value === value)?.label ?? value
+const statusLabel = orderStatusLabel
 
 const SOURCE_LABEL: Record<string, string> = {
   qr: 'QR', link: 'Havola', instagram: 'Instagram', telegram: 'Telegram', direct: 'To‘g‘ridan'
@@ -62,9 +40,7 @@ const SOURCE_LABEL: Record<string, string> = {
 const sourceLabel = (value: string) => SOURCE_LABEL[value] ?? value
 
 const hasMore = computed(() => orders.value.length < totalCount.value)
-
-const money = (value: string | number) =>
-  new Intl.NumberFormat('uz-UZ').format(Number(value)) + ' so‘m'
+// money() — `~/composables/format.ts` dan avtomatik import qilinadi.
 
 const formatDate = (value: string) =>
   new Date(value).toLocaleString('uz-UZ', {

@@ -30,6 +30,9 @@ const api = useAdminApi()
 const token = useAdminToken()
 const { resolveMediaUrl } = useMedia()
 
+// Admin sahifalari qidiruv tizimlariga tushmasligi kerak.
+useHead({ meta: [{ name: 'robots', content: 'noindex, nofollow' }] })
+
 const business = ref<BusinessMe | null>(null)
 const loading = ref(false)
 const saving = ref(false)

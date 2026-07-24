@@ -1,20 +1,5 @@
 <script setup lang="ts">
-interface Category { id: number; name: string; slug: string }
-interface Product {
-  id: number; name: string; slug: string; price: string; old_price?: string | null
-  image_url?: string | null; availability: string; category?: Category | null
-}
-interface Catalog {
-  business: {
-    name: string; slug: string; logo_url?: string | null; phone?: string | null
-    telegram_username?: string | null; address?: string | null; description?: string | null
-    categories: Category[]
-  }
-  products: Product[]
-  total: number
-  limit: number
-  offset: number
-}
+import type { Catalog } from '~/types/api'
 
 const PAGE_SIZE = 24
 
@@ -65,9 +50,31 @@ onMounted(() => {
 
 const hasMore = computed(() => !!catalog.value && catalog.value.products.length < catalog.value.total)
 
+// SEO: absolute canonical + OG/Twitter. Filtr/manba querylari canonical'ga kiritilmaydi.
+const config = useRuntimeConfig()
+const siteUrl = (config.public.siteUrl as string).replace(/\/$/, '')
+const canonicalUrl = computed(() => `${siteUrl}/${shopSlug.value}`)
+const ogImage = computed(() => resolveMediaUrl(catalog.value?.business.logo_url) || undefined)
+const pageTitle = computed(() =>
+  catalog.value ? `${catalog.value.business.name} — onlayn katalog` : 'Mebel katalogi'
+)
+const pageDescription = computed(() => catalog.value?.business.description || 'Mobil mebel katalogi')
+
+useHead({
+  link: [{ rel: 'canonical', href: canonicalUrl }]
+})
 useSeoMeta({
-  title: () => catalog.value ? `${catalog.value.business.name} — onlayn katalog` : 'Mebel katalogi',
-  description: () => catalog.value?.business.description || 'Mobil mebel katalogi'
+  title: pageTitle,
+  description: pageDescription,
+  ogType: 'website',
+  ogTitle: pageTitle,
+  ogDescription: pageDescription,
+  ogImage: ogImage,
+  ogUrl: canonicalUrl,
+  twitterCard: 'summary_large_image',
+  twitterTitle: pageTitle,
+  twitterDescription: pageDescription,
+  twitterImage: ogImage
 })
 </script>
 

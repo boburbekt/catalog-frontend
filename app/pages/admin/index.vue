@@ -1,27 +1,5 @@
 <script setup lang="ts">
-interface Category {
-  id: number
-  name: string
-  slug: string
-}
-
-interface Product {
-  id: number
-  name: string
-  slug: string
-  description?: string | null
-  price: string
-  old_price?: string | null
-  material?: string | null
-  dimensions?: string | null
-  color?: string | null
-  sku?: string | null
-  image_url?: string | null
-  availability: string
-  position: number
-  is_visible: boolean
-  category?: Category | null
-}
+import type { Product } from '~/types/api'
 
 interface ProductForm {
   category_id: number | null
@@ -42,6 +20,9 @@ interface ProductForm {
 const api = useAdminApi()
 const token = useAdminToken()
 const { resolveMediaUrl } = useMedia()
+
+// Admin sahifalari qidiruv tizimlariga tushmasligi kerak.
+useHead({ meta: [{ name: 'robots', content: 'noindex, nofollow' }] })
 
 const MAX_UPLOAD_MB = 8
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -323,16 +304,7 @@ const downloadQr = async (kind: 'png' | 'svg', productSlug?: string) => {
 }
 
 onMounted(loadProducts)
-
-const money = (value: string | number) =>
-  new Intl.NumberFormat('uz-UZ').format(Number(value)) + ' so‘m'
-
-const AVAILABILITY_LABEL: Record<string, string> = {
-  in_stock: 'Mavjud',
-  preorder: 'Buyurtma asosida',
-  out_of_stock: 'Tugagan'
-}
-const availabilityLabel = (value: string) => AVAILABILITY_LABEL[value] ?? value
+// money() va availabilityLabel() — `~/composables/format.ts` dan avtomatik import qilinadi.
 </script>
 
 <template>

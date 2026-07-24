@@ -39,18 +39,37 @@ npm run typecheck  # vue-tsc
 | O‘zgaruvchi | Default | Izoh |
 | --- | --- | --- |
 | `NUXT_PUBLIC_API_BASE` | `http://localhost:8000/api` | Backend API manzili |
+| `NUXT_PUBLIC_MEDIA_BASE` | `http://localhost:8000` | Rasm/media manzili (`/uploads/...`) |
+| `NUXT_PUBLIC_SITE_URL` | `http://localhost:3000` | Public saytning absolute manzili (canonical, OG, sitemap, robots) |
 
-Barcha so‘rovlar `useApi()` composable orqali ketadi — u shu qiymatga bog‘langan `$fetch` nusxasini qaytaradi. URL'larni kodga qattiq yozmang.
+So‘rovlar ikki composable orqali ketadi: `usePublicApi()` (token yubormaydi) va `useAdminApi()`
+(faqat admin so‘rovlarga `X-Admin-Token`). URL'larni kodga qattiq yozmang.
 
-## 4. Sahifalar
+## 4. Typelar va helperlar
+
+Backend javob typelari **yagona manbada**: `app/types/api.ts` (`Business`, `Category`, `Product`,
+`Catalog`, `Order`, `OrderItem`, `OrderList`, `Stats`). Sahifalar bu typelarni takrorlamasdan import
+qiladi. OpenAPI codegen ishlatilmaydi — backend sxemasi o‘zgarsa shu fayl qo‘lda yangilanadi.
+
+Formatlash helperlari (Nuxt avtomatik import): `app/composables/format.ts` (`money`,
+`availabilityLabel`, `orderStatusLabel`) va `app/composables/useMedia.ts` (`resolveMediaUrl`).
+
+## 5. SEO
+
+- `server/routes/sitemap.xml.ts` — backend `/api/public/sitemap` dan absolute URL'li XML quradi.
+- `server/routes/robots.txt.ts` — `/admin` ni `Disallow` qiladi va `Sitemap:` ni ko‘rsatadi.
+- Public sahifalarda `canonical`, Open Graph va Twitter card meta teglari bor.
+- Admin sahifalarida `noindex, nofollow`.
+
+## 6. Sahifalar
 
 | Route | Fayl | Render |
 | --- | --- | --- |
 | `/:shopSlug` | `app/pages/[shopSlug]/index.vue` | SSR |
 | `/:shopSlug/product/:productSlug` | `app/pages/[shopSlug]/product/[productSlug].vue` | SSR |
-| `/admin` | `app/pages/admin/index.vue` | client-only (`routeRules`) |
+| `/admin`, `/admin/orders`, `/admin/categories`, `/admin/settings` | `app/pages/admin/*.vue` | client-only (`routeRules`) |
 
-Katalog sahifasida qidiruv va kategoriya filtri serverda bajariladi — `useAsyncData` `category` va `search` o‘zgarganda qayta so‘rov yuboradi.
+Katalog sahifasida qidiruv (300–500 ms debounce) va kategoriya filtri serverda bajariladi.
 
 ## 5. Docker
 
