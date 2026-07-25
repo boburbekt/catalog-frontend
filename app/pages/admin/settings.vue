@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { onBeforeRouteLeave } from 'vue-router'
+
 interface BusinessMe {
   id: number
   name: string
@@ -26,8 +28,10 @@ interface SettingsForm {
   notify_telegram_chat_id: number | null
 }
 
+definePageMeta({ layout: 'admin' })
+
 const api = useAdminApi()
-const token = useAdminToken()
+const { token, signOut } = useAdminAuth()
 const { resolveMediaUrl } = useMedia()
 
 // Admin sahifalari qidiruv tizimlariga tushmasligi kerak.
@@ -38,8 +42,6 @@ const loading = ref(false)
 const saving = ref(false)
 const message = ref('')
 const errorMessage = ref('')
-const authError = ref('')
-const tokenInput = ref('')
 
 const emptyForm = (): SettingsForm => ({
   name: '',
@@ -54,19 +56,19 @@ const emptyForm = (): SettingsForm => ({
 })
 const form = reactive<SettingsForm>(emptyForm())
 
+// Saqlanmagan o‘zgarishlar himoyasi: joriy holatni oxirgi saqlangan nusxa bilan solishtiramiz.
+const snapshot = ref('')
+const dirty = computed(() => snapshot.value !== '' && snapshot.value !== JSON.stringify(form))
+const takeSnapshot = () => { snapshot.value = JSON.stringify(form) }
+
 // Logo ko‘rinishi: kiritilgan URL yoki mavjud `/uploads/...` media yo‘li.
 const logoPreview = computed(() => resolveMediaUrl(form.logo_url.trim()) || '')
 
 const resetMessages = () => { message.value = ''; errorMessage.value = '' }
 
 const handleError = (error: any, fallback: string) => {
-  if (error?.status === 401 || error?.response?.status === 401) {
-    token.value = null
-    business.value = null
-    authError.value = 'Token yaroqsiz. Qaytadan kiriting.'
-    return
-  }
-  errorMessage.value = error?.data?.detail || fallback
+  if (isUnauthorized(error)) { signOut(); business.value = null; return }
+  errorMessage.value = adminErrorMessage(error, fallback)
 }
 
 const fillForm = (data: BusinessMe) => {
@@ -81,6 +83,7 @@ const fillForm = (data: BusinessMe) => {
     logo_url: data.logo_url ?? '',
     notify_telegram_chat_id: data.notify_telegram_chat_id
   })
+  takeSnapshot()
 }
 
 const loadMe = async () => {
@@ -90,7 +93,6 @@ const loadMe = async () => {
     const data = await api<BusinessMe>('/admin/me')
     business.value = data
     fillForm(data)
-    authError.value = ''
   } catch (e: any) {
     handleError(e, 'Sozlamalarni yuklab bo‘lmadi.')
   } finally {
@@ -110,6 +112,7 @@ const numOrNull = (value: number | null) => {
 }
 
 const save = async () => {
+  if (saving.value) return
   saving.value = true
   resetMessages()
   const payload = {
@@ -135,43 +138,26 @@ const save = async () => {
   }
 }
 
-const signIn = async () => {
-  const value = tokenInput.value.trim()
-  if (!value) return
-  token.value = value
-  tokenInput.value = ''
-  authError.value = ''
-  await loadMe()
-}
-const signOut = () => { token.value = null; business.value = null; authError.value = '' }
-
-onMounted(loadMe)
+// Saqlanmagan o‘zgarishlar bilan sahifadan chiqishga urinilsa ogohlantiramiz.
+const UNSAVED = 'Saqlanmagan o‘zgarishlar mavjud. Sahifadan chiqilsinmi?'
+onBeforeRouteLeave(() => {
+  if (dirty.value && !window.confirm(UNSAVED)) return false
+})
+const onBeforeUnload = (e: BeforeUnloadEvent) => { if (dirty.value) { e.preventDefault(); e.returnValue = '' } }
+onMounted(() => {
+  loadMe()
+  window.addEventListener('beforeunload', onBeforeUnload)
+})
+onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload))
 </script>
 
 <template>
-  <main v-if="!token" class="admin-page shell">
-    <section class="login-card">
-      <span class="eyebrow">Boshqaruv paneli</span>
-      <h1>Kirish</h1>
-      <p>Do‘koningizning admin tokenini kiriting.</p>
-      <form class="login-form" @submit.prevent="signIn">
-        <input v-model.trim="tokenInput" type="password" autocomplete="current-password" placeholder="Admin token" required>
-        <button class="primary-button" type="submit">Kirish</button>
-      </form>
-      <p v-if="authError" class="error-message">{{ authError }}</p>
-    </section>
-  </main>
-
-  <main v-else class="admin-page shell">
-    <AdminNav />
+  <main class="admin-content">
     <header class="admin-header">
       <div>
         <span class="eyebrow">Boshqaruv</span>
         <h1>Sozlamalar</h1>
-        <p>Do‘kon ma’lumotlari, aloqa va ijtimoiy tarmoqlar.</p>
-      </div>
-      <div class="admin-actions">
-        <button class="secondary-button" @click="signOut">Chiqish</button>
+        <p>Do‘kon ma’lumotlari, aloqa va bildirishnomalar.</p>
       </div>
     </header>
 
@@ -181,11 +167,11 @@ onMounted(loadMe)
       <!-- Faqat o‘qish uchun: slug va holat super admin tomonidan boshqariladi. -->
       <div class="readonly-row wide">
         <div class="readonly-field">
-          <span class="readonly-label">Slug</span>
+          <span class="readonly-label">Slug (o‘zgartirib bo‘lmaydi)</span>
           <span class="readonly-value">{{ business.slug }}</span>
         </div>
         <div class="readonly-field">
-          <span class="readonly-label">Holat</span>
+          <span class="readonly-label">Holat (o‘zgartirib bo‘lmaydi)</span>
           <span class="badge" :class="business.is_active ? 'badge-ok' : 'badge-off'">
             {{ business.is_active ? 'Faol' : 'Faol emas' }}
           </span>
@@ -193,51 +179,45 @@ onMounted(loadMe)
         <small class="hint">Slug va holatni faqat super admin o‘zgartira oladi.</small>
       </div>
 
-      <h2 class="section-title wide">Asosiy ma’lumotlar</h2>
-      <label>Nomi<input v-model.trim="form.name" required minlength="2" maxlength="160"></label>
-      <label>Telefon<input v-model.trim="form.phone" maxlength="40" placeholder="+998 90 123 45 67"></label>
-      <label class="wide">Manzil<input v-model.trim="form.address" maxlength="300"></label>
+      <h2 class="section-title wide">Do‘kon ma’lumotlari</h2>
+      <label>Do‘kon nomi<input v-model.trim="form.name" required minlength="2" maxlength="160"></label>
       <label class="wide">Tavsif<textarea v-model.trim="form.description" rows="3"></textarea></label>
-
-      <h2 class="section-title wide">Ijtimoiy tarmoqlar</h2>
-      <label>Telegram username<input v-model.trim="form.telegram_username" maxlength="80" placeholder="do‘kon_nomi"></label>
-      <label>Instagram<input v-model.trim="form.instagram" maxlength="80" placeholder="do‘kon_nomi"></label>
-      <label>WhatsApp<input v-model.trim="form.whatsapp" maxlength="40" placeholder="+998 90 123 45 67"></label>
-
-      <h2 class="section-title wide">Bildirishnoma</h2>
-      <label>Telegram chat ID<input v-model.number="form.notify_telegram_chat_id" type="number" placeholder="Yangi buyurtmalar shu chatga yuboriladi"></label>
-
-      <h2 class="section-title wide">Logotip</h2>
       <div class="logo-field wide">
-        <label class="logo-input">Logo URL yoki media yo‘li
+        <label class="logo-input">Logotip (URL yoki media yo‘li)
           <input v-model.trim="form.logo_url" maxlength="500" placeholder="https://… yoki /uploads/…">
         </label>
         <div v-if="logoPreview" class="logo-preview">
-          <img :src="logoPreview" alt="Logo ko‘rinishi">
+          <img :src="logoPreview" alt="Logotip ko‘rinishi">
         </div>
       </div>
 
-      <p v-if="message" class="notice wide">{{ message }}</p>
-      <p v-if="errorMessage" class="error-message wide">{{ errorMessage }}</p>
+      <h2 class="section-title wide">Aloqa</h2>
+      <label>Telefon<input v-model.trim="form.phone" maxlength="40" placeholder="+998 90 123 45 67"></label>
+      <label class="wide">Manzil<input v-model.trim="form.address" maxlength="300"></label>
+      <label>Telegram username<input v-model.trim="form.telegram_username" maxlength="80" placeholder="do‘kon_nomi"></label>
+      <label>WhatsApp<input v-model.trim="form.whatsapp" maxlength="40" placeholder="+998 90 123 45 67"></label>
+      <label>Instagram<input v-model.trim="form.instagram" maxlength="80" placeholder="do‘kon_nomi"></label>
+
+      <h2 class="section-title wide">Bildirishnomalar</h2>
+      <label class="wide">Telegram chat ID
+        <input v-model.number="form.notify_telegram_chat_id" type="number" inputmode="numeric" placeholder="Masalan: 123456789">
+        <small class="hint">Yangi buyurtmalar Telegramga kelishi uchun chat ID kiriting.</small>
+      </label>
+
+      <p v-if="message" class="notice wide" role="status">{{ message }}</p>
+      <p v-if="errorMessage" class="error-message wide" role="alert">{{ errorMessage }}</p>
 
       <div class="form-buttons wide">
-        <button class="primary-button" :disabled="saving">
+        <button class="primary-button" type="submit" :disabled="saving || !dirty">
           {{ saving ? 'Saqlanmoqda…' : 'Saqlash' }}
         </button>
+        <span v-if="dirty" class="dirty-hint">Saqlanmagan o‘zgarishlar bor</span>
       </div>
     </form>
   </main>
 </template>
 
 <style scoped>
-.login-card {
-  max-width: 420px; margin: 60px auto; background: var(--surface);
-  border: 1px solid var(--line); border-radius: 22px; padding: 32px; text-align: center;
-}
-.login-card h1 { font-size: 2rem; margin: 8px 0; }
-.login-card p { color: var(--muted); margin: 0 0 20px; }
-.login-form { display: grid; gap: 12px; }
-
 .settings-form { grid-template-columns: repeat(2, 1fr); }
 .section-title { font-size: 1rem; margin: 8px 0 0; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 
@@ -257,7 +237,8 @@ onMounted(loadMe)
   border-radius: 14px; border: 1px solid var(--line); background: var(--bg); padding: 8px;
 }
 
-.form-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+.form-buttons { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.dirty-hint { color: var(--accent-dark); font-weight: 700; font-size: .85rem; }
 .badge { display: inline-flex; padding: 5px 10px; border-radius: 999px; font-size: .72rem; font-weight: 800; }
 .badge-ok { background: #e8f3ed; color: var(--success); }
 .badge-off { background: #f3e2e2; color: #a32323; }

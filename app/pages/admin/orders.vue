@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import type { Order, OrderList, OrderStatus } from '~/types/api'
 
+definePageMeta({ layout: 'admin' })
+
 const api = useAdminApi()
-const token = useAdminToken()
+const { token, signOut } = useAdminAuth()
 
 // Admin sahifalari qidiruv tizimlariga tushmasligi kerak.
 useHead({ meta: [{ name: 'robots', content: 'noindex, nofollow' }] })
@@ -13,8 +15,6 @@ const loading = ref(false)
 const loadingMore = ref(false)
 const message = ref('')
 const errorMessage = ref('')
-const authError = ref('')
-const tokenInput = ref('')
 
 const statusFilter = ref('')
 const daysFilter = ref('30')
@@ -57,13 +57,8 @@ const buildQuery = () => {
 }
 
 const handleError = (error: any, fallback: string) => {
-  if (error?.status === 401 || error?.response?.status === 401) {
-    token.value = null
-    orders.value = []
-    authError.value = 'Token yaroqsiz. Qaytadan kiriting.'
-    return
-  }
-  errorMessage.value = error?.data?.detail || fallback
+  if (isUnauthorized(error)) { signOut(); orders.value = []; return }
+  errorMessage.value = adminErrorMessage(error, fallback)
 }
 
 const loadOrders = async () => {
@@ -76,7 +71,6 @@ const loadOrders = async () => {
     const data = await api<OrderList>('/admin/orders', { query: buildQuery() })
     orders.value = data.orders
     totalCount.value = data.total
-    authError.value = ''
   } catch (e: any) {
     handleError(e, 'Buyurtmalarni yuklab bo‘lmadi.')
   } finally {
@@ -133,49 +127,17 @@ const changeStatus = async (order: Order, status: string) => {
   }
 }
 
-const signIn = async () => {
-  const value = tokenInput.value.trim()
-  if (!value) return
-  token.value = value
-  tokenInput.value = ''
-  authError.value = ''
-  await loadOrders()
-}
-
-const signOut = () => {
-  token.value = null
-  orders.value = []
-  authError.value = ''
-}
-
 watch([statusFilter, daysFilter], loadOrders)
 onMounted(loadOrders)
 </script>
 
 <template>
-  <main v-if="!token" class="admin-page shell">
-    <section class="login-card">
-      <span class="eyebrow">Boshqaruv paneli</span>
-      <h1>Kirish</h1>
-      <p>Do‘koningizning admin tokenini kiriting.</p>
-      <form class="login-form" @submit.prevent="signIn">
-        <input v-model.trim="tokenInput" type="password" autocomplete="current-password" placeholder="Admin token" required>
-        <button class="primary-button" type="submit">Kirish</button>
-      </form>
-      <p v-if="authError" class="error-message">{{ authError }}</p>
-    </section>
-  </main>
-
-  <main v-else class="admin-page shell">
-    <AdminNav />
+  <main class="admin-content">
     <header class="admin-header">
       <div>
         <span class="eyebrow">Boshqaruv</span>
         <h1>Buyurtmalar</h1>
         <p>Jami: {{ totalCount }} ta buyurtma (tanlangan filtr bo‘yicha).</p>
-      </div>
-      <div class="admin-actions">
-        <button class="secondary-button" @click="signOut">Chiqish</button>
       </div>
     </header>
 
@@ -196,8 +158,8 @@ onMounted(loadOrders)
       </label>
     </div>
 
-    <p v-if="message" class="notice">{{ message }}</p>
-    <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+    <p v-if="message" class="notice" role="status">{{ message }}</p>
+    <p v-if="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
 
     <p v-if="loading" class="empty">Yuklanmoqda…</p>
     <p v-else-if="orders.length === 0" class="empty">Buyurtmalar topilmadi.</p>
@@ -273,14 +235,14 @@ onMounted(loadOrders)
     </div>
 
     <!-- Tafsilot paneli -->
-    <div v-if="detail" class="detail-overlay" @click.self="closeDetail">
-      <aside class="detail-panel">
+    <div v-if="detail" class="detail-overlay" @click.self="closeDetail" @keydown.esc="closeDetail">
+      <aside class="detail-panel" role="dialog" aria-modal="true" :aria-label="`Buyurtma #${detail.id}`">
         <header class="detail-head">
           <div>
             <span class="eyebrow">Buyurtma #{{ detail.id }}</span>
             <h2>{{ detail.customer_name }}</h2>
           </div>
-          <button class="link-button" @click="closeDetail">Yopish</button>
+          <button type="button" class="link-button" @click="closeDetail">Yopish</button>
         </header>
 
         <p v-if="detailLoading" class="empty">Yuklanmoqda…</p>
@@ -327,14 +289,6 @@ onMounted(loadOrders)
 </template>
 
 <style scoped>
-.login-card {
-  max-width: 420px; margin: 60px auto; background: var(--surface);
-  border: 1px solid var(--line); border-radius: 22px; padding: 32px; text-align: center;
-}
-.login-card h1 { font-size: 2rem; margin: 8px 0; }
-.login-card p { color: var(--muted); margin: 0 0 20px; }
-.login-form { display: grid; gap: 12px; }
-
 .filters { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
 .filters label { display: grid; gap: 6px; font-weight: 700; font-size: .85rem; }
 .empty { color: var(--muted); text-align: center; padding: 24px; }
