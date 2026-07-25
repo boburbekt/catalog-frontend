@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Product } from '~/types/api'
+import type { Category, Product } from '~/types/api'
 
 interface ProductForm {
   category_id: number | null
@@ -28,6 +28,7 @@ const MAX_UPLOAD_MB = 8
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 const products = ref<Product[]>([])
+const categories = ref<Category[]>([])
 const loading = ref(false)
 const showForm = ref(false)
 const saving = ref(false)
@@ -145,13 +146,23 @@ const loadProducts = async () => {
   }
 }
 
+// Kategoriyalar formadagi `<select>` uchun yuklanadi (qo‘lda ID kiritish o‘rniga).
+const loadCategories = async () => {
+  if (!token.value) return
+  try {
+    categories.value = await api<Category[]>('/admin/categories')
+  } catch {
+    // Kategoriyalar yuklanmasa ham mahsulot boshqaruvi ishlashda davom etsin.
+  }
+}
+
 const signIn = async () => {
   const value = tokenInput.value.trim()
   if (!value) return
   token.value = value
   tokenInput.value = ''
   authError.value = ''
-  await loadProducts()
+  await Promise.all([loadProducts(), loadCategories()])
 }
 
 const signOut = () => {
@@ -231,19 +242,45 @@ const saveProduct = async () => {
   saving.value = true
   resetMessages()
   const payload = buildPayload()
+  const isCreate = editingId.value === null
   try {
-    if (editingId.value === null) {
-      // Avval mahsulot yaratamiz, so‘ng qaytgan ID bilan rasmni yuklaymiz.
+    // 1-qadam: mahsulotni saqlash (POST yoki PATCH). Bu muvaffaqiyatsiz bo‘lsa hech narsa yaratilmaydi.
+    let productId: number
+    if (isCreate) {
       const created = await api<Product>('/admin/products', { method: 'POST', body: payload })
-      await uploadImage(created.id)
-      message.value = 'Mahsulot qo‘shildi.'
+      productId = created.id
+      // Mahsulot yaratildi — formani darrov tahrirlash rejimiga o‘tkazamiz.
+      // Shu tufayli rasm yuklash muvaffaqiyatsiz bo‘lsa ham, qayta "Saqlash" POST emas,
+      // PATCH bo‘ladi — duplicate slug yaratilmaydi.
+      editingId.value = created.id
+      slugTouched.value = true
+      form.image_url = created.image_url ?? ''
     } else {
       // Tahrirlashda `is_visible` yuborilmaydi — ko‘rinish alohida tugma orqali boshqariladi.
       await api(`/admin/products/${editingId.value}`, { method: 'PATCH', body: payload })
-      // Yangi fayl tanlangan bo‘lsagina rasm yuklanadi.
-      await uploadImage(editingId.value)
-      message.value = 'Mahsulot yangilandi.'
+      productId = editingId.value as number
     }
+
+    // 2-qadam: rasm yuklash — alohida bosqich. Muvaffaqiyatsiz bo‘lsa mahsulot baribir saqlangan.
+    if (imageFile.value) {
+      try {
+        await uploadImage(productId)
+      } catch (imgErr: any) {
+        if (imgErr?.status === 401 || imgErr?.response?.status === 401) {
+          handleError(imgErr, '')
+          return
+        }
+        // Partial-success: mahsulot saqlandi, lekin rasm yuklanmadi.
+        await loadProducts()
+        errorMessage.value = isCreate
+          ? 'Mahsulot yaratildi, lekin rasm yuklanmadi. Uni tahrirlab, rasmni qayta yuklashingiz mumkin.'
+          : 'Mahsulot yangilandi, lekin rasm yuklanmadi. Rasmni qayta yuklab ko‘ring.'
+        // Forma ochiq qoladi (endi tahrirlash rejimida) — foydalanuvchi shu yerda qayta urinadi.
+        return
+      }
+    }
+
+    message.value = isCreate ? 'Mahsulot qo‘shildi.' : 'Mahsulot yangilandi.'
     closeForm()
     await loadProducts()
   } catch (e: any) {
@@ -303,7 +340,7 @@ const downloadQr = async (kind: 'png' | 'svg', productSlug?: string) => {
   }
 }
 
-onMounted(loadProducts)
+onMounted(() => { loadProducts(); loadCategories() })
 // money() va availabilityLabel() — `~/composables/format.ts` dan avtomatik import qilinadi.
 </script>
 
@@ -350,7 +387,15 @@ onMounted(loadProducts)
       </div>
       <label>Nomi<input v-model.trim="form.name" required></label>
       <label>Slug<input v-model.trim="form.slug" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required @input="slugTouched = true"></label>
-      <label>Kategoriya ID<input v-model.number="form.category_id" type="number" min="1" placeholder="ixtiyoriy"></label>
+      <label>Kategoriya<select v-model="form.category_id">
+        <option :value="null">Kategoriyasiz</option>
+        <option
+          v-for="cat in categories"
+          :key="cat.id"
+          :value="cat.id"
+          :disabled="editingId === null && !cat.is_active"
+        >{{ cat.name }}{{ cat.is_active ? '' : ' (faol emas)' }}</option>
+      </select></label>
       <label>Narxi<input v-model.number="form.price" type="number" min="1" step="0.01" required></label>
       <label>Eski narx<input v-model.number="form.old_price" type="number" min="1" step="0.01" placeholder="ixtiyoriy"></label>
       <label>Pozitsiya<input v-model.number="form.position" type="number" min="0"></label>
@@ -397,7 +442,7 @@ onMounted(loadProducts)
           <tr v-for="product in products" :key="product.id" :class="{ 'row-hidden': !product.is_visible }">
             <td>
               <div class="table-product">
-                <img :src="resolveMediaUrl(product.image_url) || 'https://placehold.co/80x80?text=M'" :alt="product.name">
+                <ProductImage :src="product.image_url" :alt="product.name" class="thumb" />
                 <div><strong>{{ product.name }}</strong><small>{{ product.slug }}</small></div>
               </div>
             </td>
@@ -432,7 +477,7 @@ onMounted(loadProducts)
     <section class="product-cards mobile-only">
       <article v-for="product in products" :key="product.id" class="p-card" :class="{ 'row-hidden': !product.is_visible }">
         <div class="p-card-top">
-          <img :src="resolveMediaUrl(product.image_url) || 'https://placehold.co/80x80?text=M'" :alt="product.name">
+          <ProductImage :src="product.image_url" :alt="product.name" class="thumb" />
           <div class="p-card-info">
             <strong>{{ product.name }}</strong>
             <small>{{ product.slug }}</small>
@@ -513,6 +558,9 @@ onMounted(loadProducts)
 .p-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; }
 .p-card-top { display: flex; gap: 12px; }
 .p-card-top img { width: 64px; height: 64px; object-fit: cover; border-radius: 12px; flex: none; }
+/* ProductImage — img yoki placeholder div bo‘lishi mumkin; ikkalasini ham bir xil o‘lchamlaymiz. */
+.table-product .thumb { width: 54px; height: 54px; object-fit: cover; border-radius: 12px; flex: none; }
+.p-card-top .thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 12px; flex: none; }
 .p-card-info { display: grid; gap: 2px; min-width: 0; }
 .p-card-info small { color: var(--muted); word-break: break-all; }
 .p-card-price { font-weight: 800; margin-top: 4px; }

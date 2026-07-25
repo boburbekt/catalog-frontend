@@ -29,6 +29,12 @@ const backTo = computed(() => ({
   query: source.value ? { source: source.value } : {}
 }))
 
+// out_of_stock mahsulotda buyurtma formasi ko‘rsatilmaydi; preorder da forma ishlashda davom etadi.
+const isOutOfStock = computed(() => product.value?.availability === 'out_of_stock')
+const discount = computed(() =>
+  product.value ? discountLabel(product.value.price, product.value.old_price) : null
+)
+
 // Mahsulot ochilganda bir marta tashrif yoziladi (view_count backendda oshadi).
 onMounted(() => {
   if (!product.value) return
@@ -97,12 +103,16 @@ useSeoMeta({
 
     <section class="product-detail">
       <div class="detail-image-wrap">
-        <img :src="resolveMediaUrl(product.image_url) || 'https://placehold.co/1000x800?text=Mebel'" :alt="product.name" class="detail-image">
+        <ProductImage :src="product.image_url" :alt="product.name" class="detail-image" />
       </div>
 
       <div class="detail-content">
         <span class="eyebrow">{{ product.category?.name || 'Mebel' }}</span>
         <h1>{{ product.name }}</h1>
+        <div class="detail-badges">
+          <AvailabilityBadge :availability="product.availability" />
+          <span v-if="discount" class="discount-badge">{{ discount }}</span>
+        </div>
         <p class="detail-description">{{ product.description }}</p>
         <div class="detail-price">
           <strong>{{ money(product.price) }}</strong>
@@ -111,12 +121,24 @@ useSeoMeta({
         <dl class="spec-list">
           <div><dt>Material</dt><dd>{{ product.material || 'Ko‘rsatilmagan' }}</dd></div>
           <div><dt>O‘lcham</dt><dd>{{ product.dimensions || 'Ko‘rsatilmagan' }}</dd></div>
-          <div><dt>Holati</dt><dd>{{ product.availability === 'in_stock' ? 'Mavjud' : 'Buyurtma asosida' }}</dd></div>
+          <div><dt>Holati</dt><dd>{{ availabilityLabel(product.availability) }}</dd></div>
         </dl>
       </div>
     </section>
 
-    <section class="order-section">
+    <!-- out_of_stock: buyurtma formasi o‘rniga aniq tushuntirish. -->
+    <section v-if="isOutOfStock" class="order-section out-of-stock-section">
+      <div>
+        <span class="eyebrow">Hozircha mavjud emas</span>
+        <h2>Bu mahsulot hozir mavjud emas</h2>
+        <p>
+          Hozircha buyurtma qabul qilinmaydi. Mahsulot yana paydo bo‘lganda buyurtma berishingiz mumkin —
+          do‘kon bilan to‘g‘ridan-to‘g‘ri bog‘lanib, mavjudligini aniqlashtiring.
+        </p>
+      </div>
+    </section>
+
+    <section v-else class="order-section">
       <div>
         <span class="eyebrow">Buyurtma</span>
         <h2>Do‘kon siz bilan bog‘lanadi</h2>
@@ -173,4 +195,26 @@ useSeoMeta({
   flex: none;
 }
 .consent-label span { line-height: 1.4; }
+
+.detail-badges {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 4px 0 8px;
+}
+.discount-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #8f1d1d;
+  color: #fff;
+  border-radius: 999px;
+  padding: 6px 11px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.out-of-stock-section {
+  grid-template-columns: 1fr;
+}
 </style>
