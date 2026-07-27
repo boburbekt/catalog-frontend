@@ -114,8 +114,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 .error-message { color: #a32323 !important; font-weight: 700; }
 
 .admin-page { padding-block: 34px 70px; }
-.admin-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 26px; }
-.admin-header h1 { font-size: 3rem; margin: 6px 0; }
+.admin-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 26px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.admin-header h1 { font-size: clamp(1.5rem, 3.2vw, 2rem); margin: 3px 0 4px; letter-spacing: -.02em; }
 .admin-header p { color: var(--muted); margin: 0; }
 .admin-actions { display: flex; gap: 10px; }
 .admin-form { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 22px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 22px; }
