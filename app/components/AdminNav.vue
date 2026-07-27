@@ -3,10 +3,10 @@
 const props = withDefaults(defineProps<{ newOrders?: number }>(), { newOrders: 0 })
 
 const links = [
-  { to: '/admin', label: 'Mahsulotlar', exact: true },
-  { to: '/admin/orders', label: 'Buyurtmalar', exact: false, badge: true },
-  { to: '/admin/categories', label: 'Kategoriyalar', exact: false },
-  { to: '/admin/settings', label: 'Sozlamalar', exact: false }
+  { to: '/admin', label: 'Mahsulotlar', icon: 'fa-couch', exact: true },
+  { to: '/admin/orders', label: 'Buyurtmalar', icon: 'fa-receipt', exact: false, badge: true },
+  { to: '/admin/categories', label: 'Kategoriyalar', icon: 'fa-tags', exact: false },
+  { to: '/admin/settings', label: 'Sozlamalar', icon: 'fa-gear', exact: false }
 ]
 
 const route = useRoute()
@@ -23,7 +23,8 @@ const isActive = (link: { to: string, exact: boolean }) =>
       class="admin-nav-link"
       :class="{ active: isActive(link) }"
     >
-      {{ link.label }}
+      <i class="fa-solid" :class="link.icon" aria-hidden="true"></i>
+      <span>{{ link.label }}</span>
       <span v-if="link.badge && props.newOrders > 0" class="nav-badge">{{ props.newOrders }}</span>
     </NuxtLink>
   </nav>

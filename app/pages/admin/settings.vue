@@ -186,7 +186,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
         <small class="hint">Slug va holatni faqat super admin o‘zgartira oladi.</small>
       </div>
 
-      <h2 class="section-title wide">Do‘kon ma’lumotlari</h2>
+      <h2 class="section-title wide"><i class="fa-solid fa-store" aria-hidden="true"></i> Do‘kon ma’lumotlari</h2>
       <label>Do‘kon nomi<input v-model.trim="form.name" required minlength="2" maxlength="160"></label>
       <label class="wide">Tavsif<textarea v-model.trim="form.description" rows="3"></textarea></label>
       <div class="logo-field wide">
@@ -198,14 +198,14 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
         </div>
       </div>
 
-      <h2 class="section-title wide">Aloqa</h2>
+      <h2 class="section-title wide"><i class="fa-solid fa-address-book" aria-hidden="true"></i> Aloqa</h2>
       <label>Telefon<input :value="form.phone" @input="onPhoneInput" type="tel" inputmode="tel" maxlength="40" placeholder="+998 90 123 45 67"></label>
       <label class="wide">Manzil<input v-model.trim="form.address" maxlength="300"></label>
       <label>Telegram username<input v-model.trim="form.telegram_username" maxlength="80" placeholder="do‘kon_nomi"></label>
       <label>WhatsApp<input v-model.trim="form.whatsapp" maxlength="40" placeholder="+998 90 123 45 67"></label>
       <label>Instagram<input v-model.trim="form.instagram" maxlength="80" placeholder="do‘kon_nomi"></label>
 
-      <h2 class="section-title wide">Bildirishnomalar</h2>
+      <h2 class="section-title wide"><i class="fa-solid fa-bell" aria-hidden="true"></i> Bildirishnomalar</h2>
       <label class="wide">Telegram chat ID
         <input v-model.number="form.notify_telegram_chat_id" type="number" inputmode="numeric" placeholder="Masalan: 123456789">
         <small class="hint">Yangi buyurtmalar Telegramga kelishi uchun chat ID kiriting.</small>
@@ -216,6 +216,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
 
       <div class="form-buttons wide">
         <button class="primary-button" type="submit" :disabled="saving || !dirty">
+          <i class="fa-solid" :class="saving ? 'fa-spinner fa-spin' : 'fa-floppy-disk'" aria-hidden="true"></i>
           {{ saving ? 'Saqlanmoqda…' : 'Saqlash' }}
         </button>
         <span v-if="dirty" class="dirty-hint">Saqlanmagan o‘zgarishlar bor</span>
@@ -226,7 +227,8 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
 
 <style scoped>
 .settings-form { grid-template-columns: repeat(2, 1fr); }
-.section-title { font-size: 1rem; margin: 8px 0 0; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.section-title { font-size: 1rem; margin: 8px 0 0; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; display: flex; align-items: center; gap: 9px; }
+.section-title i { color: var(--accent-dark); font-size: .95rem; }
 
 .readonly-row {
   display: flex; flex-wrap: wrap; align-items: center; gap: 18px;

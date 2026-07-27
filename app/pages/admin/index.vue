@@ -505,10 +505,10 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
         <p>Katalogingizni shu yerdan boshqaring.</p>
       </div>
       <div class="admin-actions">
-        <button type="button" class="secondary-button" @click="downloadQr('png')">QR (PNG)</button>
-        <button type="button" class="secondary-button" @click="downloadQr('svg')">QR (SVG)</button>
-        <button type="button" class="secondary-button" @click="showImport = true">Excel orqali</button>
-        <button type="button" class="primary-button" @click="openCreate">+ Mahsulot</button>
+        <button type="button" class="secondary-button" @click="downloadQr('png')"><i class="fa-solid fa-qrcode" aria-hidden="true"></i> QR (PNG)</button>
+        <button type="button" class="secondary-button" @click="downloadQr('svg')"><i class="fa-solid fa-qrcode" aria-hidden="true"></i> QR (SVG)</button>
+        <button type="button" class="secondary-button" @click="showImport = true"><i class="fa-solid fa-file-excel" aria-hidden="true"></i> Excel orqali</button>
+        <button type="button" class="primary-button" @click="openCreate"><i class="fa-solid fa-plus" aria-hidden="true"></i> Mahsulot</button>
       </div>
     </header>
 
@@ -517,7 +517,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
     <form v-if="showForm" class="admin-form product-form" @submit.prevent="saveProduct()">
       <div class="form-title">
         <strong>{{ editingId === null ? 'Yangi mahsulot' : 'Mahsulotni tahrirlash' }}</strong>
-        <button type="button" class="link-button" @click="closeForm">Bekor qilish</button>
+        <button type="button" class="link-button" @click="closeForm"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Bekor qilish</button>
       </div>
 
       <!-- Asosiy ma'lumotlar — yangi mahsulotni shu 4 maydon bilan saqlash mumkin. -->
@@ -576,6 +576,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
           <div class="upload-controls">
             <label class="upload-btn">
               <input class="sr-file" type="file" accept="image/jpeg,image/png,image/webp" @change="onImageChange">
+              <i class="fa-solid" :class="shownImage ? 'fa-arrows-rotate' : 'fa-image'" aria-hidden="true"></i>
               <span>{{ shownImage ? 'Rasmni almashtirish' : 'Rasm tanlash' }}</span>
             </label>
             <button v-if="imageFile" type="button" class="link-button" @click="clearImageSelection">Bekor qilish</button>
@@ -628,6 +629,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
 
       <div class="form-buttons">
         <button class="primary-button" type="submit" :disabled="saving">
+          <i class="fa-solid" :class="(uploading || saving) ? 'fa-spinner fa-spin' : 'fa-check'" aria-hidden="true"></i>
           {{ uploading ? 'Rasm yuklanmoqda…' : saving ? 'Saqlanmoqda…' : editingId === null ? 'Saqlash' : 'O‘zgarishlarni saqlash' }}
         </button>
         <button
@@ -636,8 +638,8 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
           class="secondary-button"
           :disabled="saving"
           @click="saveProduct(true)"
-        >Saqlash va yana qo‘shish</button>
-        <button type="button" class="secondary-button" @click="closeForm">Bekor qilish</button>
+        ><i class="fa-solid fa-plus" aria-hidden="true"></i> Saqlash va yana qo‘shish</button>
+        <button type="button" class="secondary-button" @click="closeForm"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Bekor qilish</button>
       </div>
     </form>
 
@@ -648,9 +650,10 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
 
     <!-- Bo'sh holat -->
     <div v-if="!loading && products.length === 0" class="empty-box">
+      <div class="empty-icon"><i class="fa-solid fa-couch" aria-hidden="true"></i></div>
       <h3>Hozircha mahsulot yo‘q</h3>
       <p>Birinchi mahsulotingizni qo‘shing — 1–2 daqiqada tayyor bo‘ladi.</p>
-      <button type="button" class="primary-button" @click="openCreate">+ Birinchi mahsulot</button>
+      <button type="button" class="primary-button" @click="openCreate"><i class="fa-solid fa-plus" aria-hidden="true"></i> Birinchi mahsulot</button>
     </div>
 
     <!-- Ro'yxat filtri: rasmsiz mahsulotlarni ajratib ko'rish. -->
@@ -690,12 +693,25 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
               <span v-else class="badge badge-hidden">Yashirilgan</span>
             </td>
             <td class="actions-cell">
-              <button type="button" class="link-button" @click="openEdit(product)">Tahrirlash</button>
-              <button type="button" class="link-button" :disabled="busyId === product.id" @click="toggleVisible(product)">
-                {{ product.is_visible ? 'Yashirish' : 'Ko‘rsatish' }}
+              <button type="button" class="icon-btn only-icon" title="Tahrirlash" aria-label="Tahrirlash" @click="openEdit(product)">
+                <i class="fa-solid fa-pen" aria-hidden="true"></i>
               </button>
-              <button type="button" class="link-button" @click="downloadQr('png', product.slug)">QR</button>
-              <button type="button" class="link-button danger" :disabled="busyId === product.id" @click="deleteProduct(product)">O‘chirish</button>
+              <button
+                type="button"
+                class="icon-btn only-icon"
+                :title="product.is_visible ? 'Yashirish' : 'Ko‘rsatish'"
+                :aria-label="product.is_visible ? 'Yashirish' : 'Ko‘rsatish'"
+                :disabled="busyId === product.id"
+                @click="toggleVisible(product)"
+              >
+                <i class="fa-solid" :class="product.is_visible ? 'fa-eye-slash' : 'fa-eye'" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="icon-btn only-icon" title="QR kod" aria-label="QR kod" @click="downloadQr('png', product.slug)">
+                <i class="fa-solid fa-qrcode" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="icon-btn only-icon danger" title="O‘chirish" aria-label="O‘chirish" :disabled="busyId === product.id" @click="deleteProduct(product)">
+                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+              </button>
             </td>
           </tr>
         </tbody>
@@ -719,12 +735,13 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
           <span v-if="!product.image_url" class="badge badge-noimg">Rasm yo‘q</span>
         </div>
         <div class="p-card-actions">
-          <button type="button" class="secondary-button" @click="openEdit(product)">Tahrirlash</button>
+          <button type="button" class="secondary-button" @click="openEdit(product)"><i class="fa-solid fa-pen" aria-hidden="true"></i> Tahrirlash</button>
           <button type="button" class="secondary-button" :disabled="busyId === product.id" @click="toggleVisible(product)">
+            <i class="fa-solid" :class="product.is_visible ? 'fa-eye-slash' : 'fa-eye'" aria-hidden="true"></i>
             {{ product.is_visible ? 'Yashirish' : 'Ko‘rsatish' }}
           </button>
-          <button type="button" class="secondary-button" @click="downloadQr('png', product.slug)">QR</button>
-          <button type="button" class="secondary-button danger" :disabled="busyId === product.id" @click="deleteProduct(product)">O‘chirish</button>
+          <button type="button" class="secondary-button" @click="downloadQr('png', product.slug)"><i class="fa-solid fa-qrcode" aria-hidden="true"></i> QR</button>
+          <button type="button" class="secondary-button danger" :disabled="busyId === product.id" @click="deleteProduct(product)"><i class="fa-solid fa-trash" aria-hidden="true"></i> O‘chirish</button>
         </div>
       </article>
     </section>
@@ -772,7 +789,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
 }
 .upload-controls { display: grid; gap: 8px; min-width: 200px; flex: 1; }
 .upload-btn {
-  display: inline-flex; align-items: center; justify-content: center; width: fit-content;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: fit-content;
   border-radius: 999px; padding: 11px 20px; font-weight: 750; border: 1px solid var(--line);
   background: var(--surface); cursor: pointer;
 }
@@ -796,9 +813,14 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
 }
 .empty-box h3 { margin: 0 0 8px; font-size: 1.4rem; }
 .empty-box p { color: var(--muted); margin: 0 0 18px; }
+.empty-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 68px; height: 68px; margin-bottom: 16px;
+  border-radius: 50%; background: #efe7d8; color: var(--accent-dark); font-size: 1.7rem;
+}
 
 .actions-cell { white-space: nowrap; }
-.actions-cell .link-button + .link-button { margin-left: 16px; }
+.actions-cell { display: flex; gap: 8px; }
 .link-button {
   background: none; border: 0; padding: 0; color: var(--accent-dark);
   font-weight: 700; text-decoration: underline; cursor: pointer;
@@ -825,8 +847,10 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
 .row-hidden td:first-child::after { content: ' · yashirilgan'; color: var(--muted); font-size: .75rem; }
 
 /* Ekran o‘lchamiga qarab jadval yoki kartalar. */
+/* .mobile-only ni yashirish `.product-cards { display: grid }` tomonidan bekor bo‘lmasligi uchun
+   grid faqat mobil media-query’da beriladi; bazada esa yashirin. */
 .mobile-only { display: none; }
-.product-cards { display: grid; gap: 14px; }
+.product-cards { gap: 14px; }
 .p-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; }
 .p-card-top { display: flex; gap: 12px; }
 .p-card-top .thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 12px; flex: none; }

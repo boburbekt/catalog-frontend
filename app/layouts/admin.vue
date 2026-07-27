@@ -43,7 +43,7 @@ watch(token, (value:any) => { if (value) refreshNewOrders() }, { immediate: true
         <span class="eyebrow">Boshqaruv paneli</span>
         <strong>Mebel Catalog</strong>
       </NuxtLink>
-      <button v-if="token" type="button" class="secondary-button" @click="signOut">Chiqish</button>
+      <button v-if="token" type="button" class="secondary-button" @click="signOut"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Chiqish</button>
     </div>
 
     <template v-if="token">
@@ -52,20 +52,24 @@ watch(token, (value:any) => { if (value) refreshNewOrders() }, { immediate: true
     </template>
 
     <section v-else class="login-card">
+      <div class="login-icon"><i class="fa-solid fa-lock" aria-hidden="true"></i></div>
       <span class="eyebrow">Kirish</span>
       <h1>Boshqaruv paneli</h1>
       <p>Do‘koningizning admin tokenini kiriting.</p>
       <form class="login-form" @submit.prevent="onSignIn">
         <label class="sr-label" for="admin-token">Admin token</label>
-        <input
-          id="admin-token"
-          v-model.trim="tokenInput"
-          type="password"
-          autocomplete="current-password"
-          placeholder="Admin token"
-          required
-        >
-        <button class="primary-button" type="submit" :disabled="signingIn">Kirish</button>
+        <div class="token-field">
+          <i class="fa-solid fa-key" aria-hidden="true"></i>
+          <input
+            id="admin-token"
+            v-model.trim="tokenInput"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Admin token"
+            required
+          >
+        </div>
+        <button class="primary-button" type="submit" :disabled="signingIn"><i class="fa-solid fa-arrow-right-to-bracket" aria-hidden="true"></i> Kirish</button>
       </form>
       <p v-if="authError" class="error-message" role="alert">{{ authError }}</p>
     </section>
@@ -96,7 +100,19 @@ watch(token, (value:any) => { if (value) refreshNewOrders() }, { immediate: true
 }
 .login-card h1 { font-size: 1.8rem; margin: 8px 0; }
 .login-card p { color: var(--muted); margin: 0 0 20px; }
+.login-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 60px; height: 60px; margin: 0 auto 12px;
+  border-radius: 50%; background: var(--ink); color: #fff; font-size: 1.4rem;
+}
 .login-form { display: grid; gap: 12px; }
+/* Token inputi — ichida kalit ikonkasi bilan. */
+.token-field { position: relative; }
+.token-field i {
+  position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); pointer-events: none;
+}
+.token-field input { width: 100%; padding-left: 42px; }
 .sr-label {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap;

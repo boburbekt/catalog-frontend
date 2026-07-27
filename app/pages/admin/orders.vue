@@ -175,7 +175,7 @@ onMounted(loadOrders)
             <td>#{{ order.id }}</td>
             <td>
               <strong>{{ order.customer_name }}</strong>
-              <a class="phone" :href="`tel:${order.customer_phone}`">{{ order.customer_phone }}</a>
+              <a class="phone" :href="`tel:${order.customer_phone}`"><i class="fa-solid fa-phone" aria-hidden="true"></i> {{ order.customer_phone }}</a>
             </td>
             <td><span class="source-pill">{{ sourceLabel(order.source) }}</span></td>
             <td>{{ formatDate(order.created_at) }}</td>
@@ -194,7 +194,7 @@ onMounted(loadOrders)
                 <option v-for="s in STATUSES" :key="s.value" :value="s.value">{{ s.label }}</option>
               </select>
             </td>
-            <td><button class="link-button" @click="openDetail(order)">Batafsil</button></td>
+            <td><button class="icon-btn" @click="openDetail(order)"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Batafsil</button></td>
           </tr>
         </tbody>
       </table>
@@ -207,7 +207,7 @@ onMounted(loadOrders)
           <strong>#{{ order.id }} · {{ order.customer_name }}</strong>
           <span class="source-pill">{{ sourceLabel(order.source) }}</span>
         </div>
-        <a class="phone" :href="`tel:${order.customer_phone}`">{{ order.customer_phone }}</a>
+        <a class="phone" :href="`tel:${order.customer_phone}`"><i class="fa-solid fa-phone" aria-hidden="true"></i> {{ order.customer_phone }}</a>
         <div class="o-card-meta">
           <span>{{ formatDate(order.created_at) }}</span>
           <strong>{{ money(order.total) }}</strong>
@@ -223,13 +223,14 @@ onMounted(loadOrders)
           >
             <option v-for="s in STATUSES" :key="s.value" :value="s.value">{{ s.label }}</option>
           </select>
-          <button class="secondary-button" @click="openDetail(order)">Batafsil</button>
+          <button class="secondary-button" @click="openDetail(order)"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Batafsil</button>
         </div>
       </article>
     </section>
 
     <div v-if="hasMore" class="more-row">
       <button class="secondary-button" :disabled="loadingMore" @click="loadMore">
+        <i class="fa-solid" :class="loadingMore ? 'fa-spinner fa-spin' : 'fa-chevron-down'" aria-hidden="true"></i>
         {{ loadingMore ? 'Yuklanmoqda…' : 'Ko‘proq' }}
       </button>
     </div>
@@ -242,7 +243,7 @@ onMounted(loadOrders)
             <span class="eyebrow">Buyurtma #{{ detail.id }}</span>
             <h2>{{ detail.customer_name }}</h2>
           </div>
-          <button type="button" class="link-button" @click="closeDetail">Yopish</button>
+          <button type="button" class="icon-btn only-icon" title="Yopish" aria-label="Yopish" @click="closeDetail"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         </header>
 
         <p v-if="detailLoading" class="empty">Yuklanmoqda…</p>
@@ -306,8 +307,10 @@ onMounted(loadOrders)
 .more-row { display: flex; justify-content: center; margin-top: 20px; }
 
 /* Mobil kartalar */
+/* .mobile-only yashirinligi `.order-cards { display: grid }` bilan bekor bo‘lmasligi uchun
+   grid faqat mobil media-query’da beriladi. */
 .mobile-only { display: none; }
-.order-cards { display: grid; gap: 14px; }
+.order-cards { gap: 14px; }
 .o-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: grid; gap: 8px; }
 .o-card-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .o-card-meta { display: flex; justify-content: space-between; align-items: center; color: var(--muted); }

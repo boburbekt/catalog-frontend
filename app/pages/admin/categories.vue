@@ -241,7 +241,7 @@ onMounted(() => {
       </div>
       <div class="admin-actions">
         <button type="button" class="primary-button" @click="openCreate">
-          + Kategoriya
+          <i class="fa-solid fa-plus" aria-hidden="true"></i> Kategoriya
         </button>
       </div>
     </header>
@@ -256,7 +256,7 @@ onMounted(() => {
           editingId === null ? "Yangi kategoriya" : "Kategoriyani tahrirlash"
         }}</strong>
         <button type="button" class="link-button" @click="closeForm">
-          Bekor qilish
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i> Bekor qilish
         </button>
       </div>
       <label>Nomi<input v-model.trim="form.name" required /></label>
@@ -286,6 +286,7 @@ onMounted(() => {
 
       <div class="form-buttons wide">
         <button class="primary-button" type="submit" :disabled="saving">
+          <i class="fa-solid" :class="saving ? 'fa-spinner fa-spin' : 'fa-check'" aria-hidden="true"></i>
           {{
             saving
               ? "Saqlanmoqda…"
@@ -295,7 +296,7 @@ onMounted(() => {
           }}
         </button>
         <button type="button" class="secondary-button" @click="closeForm">
-          Bekor qilish
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i> Bekor qilish
         </button>
       </div>
     </form>
@@ -307,12 +308,13 @@ onMounted(() => {
 
     <p v-if="loading" class="empty">Yuklanmoqda…</p>
     <div v-else-if="categories.length === 0" class="empty-box">
+      <div class="empty-icon"><i class="fa-solid fa-tags" aria-hidden="true"></i></div>
       <h3>Hozircha kategoriya yo‘q</h3>
       <p>
         Birinchi bo‘limingizni qo‘shing — masalan “Divanlar” yoki “Stollar”.
       </p>
       <button type="button" class="primary-button" @click="openCreate">
-        + Birinchi kategoriya
+        <i class="fa-solid fa-plus" aria-hidden="true"></i> Birinchi kategoriya
       </button>
     </div>
 
@@ -332,7 +334,7 @@ onMounted(() => {
             aria-label="Yuqoriga"
             @click="moveUp(index)"
           >
-            ▲
+            <i class="fa-solid fa-chevron-up" aria-hidden="true"></i>
           </button>
           <span class="pos">{{ category.position }}</span>
           <button
@@ -345,7 +347,7 @@ onMounted(() => {
             aria-label="Pastga"
             @click="moveDown(index)"
           >
-            ▼
+            <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
           </button>
         </div>
         <div class="cat-main">
@@ -359,24 +361,25 @@ onMounted(() => {
           {{ category.is_active ? "Faol" : "Faol emas" }}
         </span>
         <div class="cat-actions">
-          <button type="button" class="link-button" @click="openEdit(category)">
-            Tahrirlash
+          <button type="button" class="icon-btn" @click="openEdit(category)">
+            <i class="fa-solid fa-pen" aria-hidden="true"></i> Tahrirlash
           </button>
           <button
             type="button"
-            class="link-button"
+            class="icon-btn"
             :disabled="busyId === category.id"
             @click="toggleActive(category)"
           >
+            <i class="fa-solid" :class="category.is_active ? 'fa-toggle-off' : 'fa-toggle-on'" aria-hidden="true"></i>
             {{ category.is_active ? "Faolsizlantirish" : "Faollashtirish" }}
           </button>
           <button
             type="button"
-            class="link-button danger"
+            class="icon-btn danger"
             :disabled="busyId === category.id"
             @click="deleteCategory(category)"
           >
-            O‘chirish
+            <i class="fa-solid fa-trash" aria-hidden="true"></i> O‘chirish
           </button>
         </div>
       </li>
@@ -448,6 +451,18 @@ onMounted(() => {
 .empty-box p {
   color: var(--muted);
   margin: 0 0 18px;
+}
+.empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  margin-bottom: 16px;
+  border-radius: 50%;
+  background: #efe7d8;
+  color: var(--accent-dark);
+  font-size: 1.7rem;
 }
 
 .link-button {

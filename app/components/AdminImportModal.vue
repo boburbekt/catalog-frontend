@@ -101,8 +101,8 @@ const successLabel = computed(() => {
   <div class="import-overlay" @click.self="emit('close')">
     <div class="import-modal" role="dialog" aria-modal="true" aria-labelledby="import-title">
       <header class="import-head">
-        <strong id="import-title">Excel orqali import</strong>
-        <button type="button" class="link-button" @click="emit('close')">Yopish</button>
+        <strong id="import-title"><i class="fa-solid fa-file-excel" aria-hidden="true"></i> Excel orqali import</strong>
+        <button type="button" class="icon-btn only-icon" title="Yopish" aria-label="Yopish" @click="emit('close')"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </header>
 
       <!-- 1-qadam: shablon + fayl tanlash -->
@@ -118,7 +118,7 @@ const successLabel = computed(() => {
           class="secondary-button"
           :disabled="downloadingTemplate"
           @click="downloadTemplate"
-        >{{ downloadingTemplate ? 'Yuklanmoqda…' : 'Shablonni yuklab olish' }}</button>
+        ><i class="fa-solid" :class="downloadingTemplate ? 'fa-spinner fa-spin' : 'fa-download'" aria-hidden="true"></i> {{ downloadingTemplate ? 'Yuklanmoqda…' : 'Shablonni yuklab olish' }}</button>
 
         <div
           class="drop-zone"
@@ -131,10 +131,11 @@ const successLabel = computed(() => {
             <strong>{{ selectedFile.name }}</strong>
             <button type="button" class="link-button" @click="selectedFile = null">Bekor qilish</button>
           </p>
-          <p v-else class="drop-hint">Faylni shu yerga tashlang yoki tanlang</p>
+          <p v-else class="drop-hint"><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i> Faylni shu yerga tashlang yoki tanlang</p>
 
           <label class="upload-btn">
             <input class="sr-file" type="file" accept=".xlsx" @change="onFileChange">
+            <i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i>
             <span>{{ selectedFile ? 'Boshqa fayl' : 'Fayl tanlash' }}</span>
           </label>
           <small class="field-hint">Faqat .xlsx · maksimal {{ MAX_MB }} MB</small>
@@ -148,15 +149,15 @@ const successLabel = computed(() => {
             class="primary-button"
             :disabled="!selectedFile || uploading"
             @click="startImport"
-          >{{ uploading ? 'Import qilinmoqda…' : 'Import qilish' }}</button>
-          <button type="button" class="secondary-button" @click="emit('close')">Bekor qilish</button>
+          ><i class="fa-solid" :class="uploading ? 'fa-spinner fa-spin' : 'fa-file-import'" aria-hidden="true"></i> {{ uploading ? 'Import qilinmoqda…' : 'Import qilish' }}</button>
+          <button type="button" class="secondary-button" @click="emit('close')"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Bekor qilish</button>
         </div>
       </div>
 
       <!-- 2-qadam: natija -->
       <div v-else class="import-body">
         <div class="result-summary">
-          <span class="result-check" aria-hidden="true">✓</span>
+          <span class="result-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
           <strong>{{ successLabel }}</strong>
         </div>
 
@@ -171,13 +172,14 @@ const successLabel = computed(() => {
         </div>
 
         <p class="image-note">
-          ⚠️ Excel’dan rasm yuklanmaydi. Rasmsiz mahsulotlar ro‘yxatda belgilanadi —
+          <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+          Excel’dan rasm yuklanmaydi. Rasmsiz mahsulotlar ro‘yxatda belgilanadi —
           har biriga rasm qo‘shib chiqing.
         </p>
 
         <div class="import-actions">
-          <button type="button" class="primary-button" @click="emit('close')">Yopish</button>
-          <button type="button" class="secondary-button" @click="importAnother">Yana fayl yuklash</button>
+          <button type="button" class="primary-button" @click="emit('close')"><i class="fa-solid fa-check" aria-hidden="true"></i> Yopish</button>
+          <button type="button" class="secondary-button" @click="importAnother"><i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i> Yana fayl yuklash</button>
         </div>
       </div>
     </div>
@@ -211,7 +213,7 @@ const successLabel = computed(() => {
 .chosen-file { margin: 0; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; }
 
 .upload-btn {
-  display: inline-flex; align-items: center; justify-content: center;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   border-radius: 999px; padding: 11px 20px; font-weight: 750; border: 1px solid var(--line);
   background: var(--bg); cursor: pointer; min-height: 44px;
 }
