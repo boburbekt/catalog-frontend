@@ -148,6 +148,17 @@ const availabilityHint = computed(() =>
   AVAILABILITY_OPTIONS.find((o) => o.value === form.availability)?.hint ?? ''
 )
 
+/**
+ * Summa inputi (narx / eski narx): kiritilayotgan raqamlarni minglik bo‘sh joy
+ * bilan formatlab ko‘rsatadi, form’dagi qiymatni esa toza son sifatida saqlaydi.
+ */
+const onAmountInput = (e: Event, field: 'price' | 'old_price'): void => {
+  const el = e.target as HTMLInputElement
+  const n = parseAmount(el.value)
+  form[field] = n
+  el.value = formatAmountInput(n)
+}
+
 // ---- Field validatsiya ----
 const fieldErrors = reactive<{ name: string, price: string }>({ name: '', price: '' })
 const validate = (): boolean => {
@@ -469,7 +480,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
 
           <label>Narx
             <span class="num-input">
-              <input v-model.number="form.price" type="number" inputmode="decimal" min="1" step="0.01" required :aria-invalid="!!fieldErrors.price">
+              <input :value="formatAmountInput(form.price)" @input="onAmountInput($event, 'price')" type="text" inputmode="numeric" required :aria-invalid="!!fieldErrors.price">
               <span class="suffix">so‘m</span>
             </span>
             <small v-if="fieldErrors.price" class="field-error">{{ fieldErrors.price }}</small>
@@ -478,7 +489,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
 
           <label>Eski narx (ixtiyoriy)
             <span class="num-input">
-              <input v-model.number="form.old_price" type="number" inputmode="decimal" min="1" step="0.01" placeholder="chegirma uchun">
+              <input :value="formatAmountInput(form.old_price)" @input="onAmountInput($event, 'old_price')" type="text" inputmode="numeric" placeholder="chegirma uchun">
               <span class="suffix">so‘m</span>
             </span>
             <small v-if="oldPriceWarning" class="field-warning">{{ oldPriceWarning }}</small>

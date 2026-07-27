@@ -1,8 +1,5 @@
 <script setup lang="ts">
-import type { Category, Product } from "~/types/api";
-import { isUnauthorized, adminErrorMessage } from "~/utils/admin";
-import { useAdminApi, useAdminAuth } from "~/composables/admin";
-import { ref, reactive, watch, onMounted } from "vue";
+import type { Category, Product } from '~/types/api'
 
 interface CategoryForm {
   name: string;

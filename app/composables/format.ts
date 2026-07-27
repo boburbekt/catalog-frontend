@@ -10,6 +10,40 @@ import type { Availability, OrderStatus } from '~/types/api'
 export const money = (value: string | number): string =>
   new Intl.NumberFormat('uz-UZ').format(Number(value)) + ' so‘m'
 
+/**
+ * Summa inputi uchun jonli formatlash: faqat raqamlarni qoldirib, minglikni
+ * bo‘sh joy bilan ajratadi (`4850000` → `4 850 000`). Kasr qismisiz — narxlar
+ * so‘mda butun kiritiladi, `money()` ham kasr ko‘rsatmaydi.
+ */
+export const formatAmountInput = (raw: string | number | null | undefined): string => {
+  const digits = String(raw ?? '').replace(/\D/g, '')
+  return digits ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : ''
+}
+
+/** Formatlangan summani songa qaytaradi: `'4 850 000'` → `4850000`, bo‘sh → `null`. */
+export const parseAmount = (formatted: string): number | null => {
+  const digits = formatted.replace(/\D/g, '')
+  return digits ? Number(digits) : null
+}
+
+/**
+ * Telefon raqamni jonli formatlash: `+998 90 123 45 67`.
+ * Faqat raqamlarni oladi, `998` prefiksini bir marta qo‘yadi, 9 ta lokal
+ * raqamgacha kesadi. Bo‘sh kiritilsa — bo‘sh qaytaradi (majburan +998 yozmaydi).
+ */
+export const formatPhone = (raw: string): string => {
+  let digits = raw.replace(/\D/g, '')
+  if (!digits) return ''
+  if (digits.startsWith('998')) digits = digits.slice(3)
+  digits = digits.slice(0, 9)
+  let out = '+998'
+  if (digits.length > 0) out += ' ' + digits.slice(0, 2)
+  if (digits.length > 2) out += ' ' + digits.slice(2, 5)
+  if (digits.length > 5) out += ' ' + digits.slice(5, 7)
+  if (digits.length > 7) out += ' ' + digits.slice(7, 9)
+  return out
+}
+
 const AVAILABILITY_LABELS: Record<Availability, string> = {
   in_stock: 'Mavjud',
   preorder: 'Buyurtma asosida',

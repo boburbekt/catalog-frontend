@@ -23,6 +23,13 @@ const sending = ref(false)
 const successMessage = ref('')
 const formError = ref('')
 
+// Telefonni kiritish paytida `+998 90 123 45 67` ko‘rinishida formatlaydi.
+const onPhoneInput = (e: Event): void => {
+  const el = e.target as HTMLInputElement
+  form.customer_phone = formatPhone(el.value)
+  el.value = form.customer_phone
+}
+
 // Katalogga qaytish havolasida ham manba saqlanadi.
 const backTo = computed(() => ({
   path: `/${shopSlug}`,
@@ -146,7 +153,7 @@ useSeoMeta({
       </div>
       <form class="order-form" @submit.prevent="submitOrder">
         <label>Ismingiz<input v-model.trim="form.customer_name" required minlength="2" placeholder="Jasurbek"></label>
-        <label>Telefon<input v-model.trim="form.customer_phone" required minlength="7" placeholder="+998 90 123 45 67"></label>
+        <label>Telefon<input :value="form.customer_phone" @input="onPhoneInput" type="tel" inputmode="tel" required minlength="7" placeholder="+998 90 123 45 67"></label>
         <label>Miqdor<input v-model.number="form.quantity" required type="number" min="1" max="99"></label>
         <label>Izoh<textarea v-model.trim="form.comment" rows="3" placeholder="Rang yoki yetkazib berish bo‘yicha savol"></textarea></label>
 

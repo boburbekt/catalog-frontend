@@ -64,6 +64,13 @@ const takeSnapshot = () => { snapshot.value = JSON.stringify(form) }
 // Logo ko‘rinishi: kiritilgan URL yoki mavjud `/uploads/...` media yo‘li.
 const logoPreview = computed(() => resolveMediaUrl(form.logo_url.trim()) || '')
 
+// Telefonni kiritish paytida `+998 90 123 45 67` ko‘rinishida formatlaydi.
+const onPhoneInput = (e: Event): void => {
+  const el = e.target as HTMLInputElement
+  form.phone = formatPhone(el.value)
+  el.value = form.phone
+}
+
 const resetMessages = () => { message.value = ''; errorMessage.value = '' }
 
 const handleError = (error: any, fallback: string) => {
@@ -74,7 +81,7 @@ const handleError = (error: any, fallback: string) => {
 const fillForm = (data: BusinessMe) => {
   Object.assign(form, {
     name: data.name,
-    phone: data.phone ?? '',
+    phone: formatPhone(data.phone ?? ''),
     address: data.address ?? '',
     telegram_username: data.telegram_username ?? '',
     whatsapp: data.whatsapp ?? '',
@@ -192,7 +199,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
       </div>
 
       <h2 class="section-title wide">Aloqa</h2>
-      <label>Telefon<input v-model.trim="form.phone" maxlength="40" placeholder="+998 90 123 45 67"></label>
+      <label>Telefon<input :value="form.phone" @input="onPhoneInput" type="tel" inputmode="tel" maxlength="40" placeholder="+998 90 123 45 67"></label>
       <label class="wide">Manzil<input v-model.trim="form.address" maxlength="300"></label>
       <label>Telegram username<input v-model.trim="form.telegram_username" maxlength="80" placeholder="do‘kon_nomi"></label>
       <label>WhatsApp<input v-model.trim="form.whatsapp" maxlength="40" placeholder="+998 90 123 45 67"></label>
