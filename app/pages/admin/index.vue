@@ -42,7 +42,21 @@ const products = ref<Product[]>([])
 const categories = ref<Category[]>([])
 const loading = ref(false)
 const showForm = ref(false)
+const showImport = ref(false)
 const saving = ref(false)
+
+// Ro‘yxat filtri: rasmsiz mahsulotlarni ajratib ko‘rsatish (import odatda rasmsiz keladi).
+const onlyMissingImage = ref(false)
+const missingImageCount = computed(() => products.value.filter((p) => !p.image_url).length)
+const visibleProducts = computed(() =>
+  onlyMissingImage.value ? products.value.filter((p) => !p.image_url) : products.value
+)
+
+// Formadagi yig‘iladigan bo‘limlar holati (tahrirlashda to‘ldirilgan bo‘lsa ochiladi).
+const moreOpen = ref(false)
+const advancedOpen = ref(false)
+// Nomi inputi — "Saqlash va yana qo‘shish" dan keyin fokus shu yerga qaytadi.
+const nameInput = ref<HTMLInputElement | null>(null)
 /** null — yaratish rejimi; raqam — o‘sha `id` li mahsulotni tahrirlash. */
 const editingId = ref<number | null>(null)
 const message = ref('')
@@ -148,6 +162,27 @@ const availabilityHint = computed(() =>
   AVAILABILITY_OPTIONS.find((o) => o.value === form.availability)?.hint ?? ''
 )
 
+// Yig‘iladigan bo‘limlardagi to‘ldirilgan maydonlar soni — sarlavhada ko‘rsatiladi.
+// "To‘ldirilgan" = standart qiymatdan farq qiladigan maydon.
+const moreFilledCount = computed(() => {
+  let n = 0
+  if (form.description.trim()) n++
+  if (form.material.trim()) n++
+  if (form.dimensions.trim()) n++
+  if (form.color.trim()) n++
+  if (form.old_price !== null && (form.old_price as unknown) !== '') n++
+  if (form.availability !== 'in_stock') n++
+  return n
+})
+const advancedFilledCount = computed(() => {
+  let n = 0
+  if (form.sku.trim()) n++
+  if (Number(form.position) > 0) n++
+  if (!form.is_visible) n++
+  return n
+})
+const filledLabel = (n: number) => (n > 0 ? ` (${n} ta to‘ldirilgan)` : '')
+
 /**
  * Summa inputi (narx / eski narx): kiritilayotgan raqamlarni minglik bo‘sh joy
  * bilan formatlab ko‘rsatadi, form’dagi qiymatni esa toza son sifatida saqlaydi.
@@ -235,6 +270,9 @@ const dirty = computed(() =>
 )
 const takeSnapshot = () => { formSnapshot.value = JSON.stringify(form) }
 
+const nextPosition = () =>
+  products.value.length ? Math.max(...products.value.map((p) => p.position)) + 1 : 0
+
 const openCreate = () => {
   resetMessages()
   clearImageSelection()
@@ -242,10 +280,14 @@ const openCreate = () => {
   slugTouched.value = false
   Object.assign(form, emptyForm(), {
     // Pozitsiya avtomatik: mavjud eng katta + 1 (foydalanuvchi o‘ylamasligi uchun).
-    position: products.value.length ? Math.max(...products.value.map((p) => p.position)) + 1 : 0
+    position: nextPosition()
   })
+  // Yangi mahsulotda faqat asosiy maydonlar ko‘rinsin — qo‘shimchalar yopiq.
+  moreOpen.value = false
+  advancedOpen.value = false
   takeSnapshot()
   showForm.value = true
+  nextTick(() => nameInput.value?.focus())
 }
 
 const openEdit = (product: Product) => {
@@ -269,6 +311,9 @@ const openEdit = (product: Product) => {
     position: product.position,
     is_visible: product.is_visible
   })
+  // Tahrirlashda to‘ldirilgan bo‘lim ochiq ochilsin — user ma’lumot yo‘qolgan deb o‘ylamasin.
+  moreOpen.value = moreFilledCount.value > 0
+  advancedOpen.value = advancedFilledCount.value > 0
   takeSnapshot()
   showForm.value = true
 }
@@ -305,7 +350,22 @@ const buildPayload = () => ({
   is_visible: form.is_visible
 })
 
-const saveProduct = async () => {
+// "Saqlash va yana qo‘shish" dan keyin: formani tozalaydi, lekin kategoriyani saqlab qoladi
+// (ketma-ket bir kategoriyaga kiritish tez bo‘lsin), fokus Nomi maydoniga qaytadi.
+const resetForNextEntry = (categoryId: number | null) => {
+  clearImageSelection()
+  editingId.value = null
+  slugTouched.value = false
+  Object.assign(form, emptyForm(), { category_id: categoryId, position: nextPosition() })
+  moreOpen.value = false
+  advancedOpen.value = false
+  fieldErrors.name = ''
+  fieldErrors.price = ''
+  takeSnapshot()
+  nextTick(() => nameInput.value?.focus())
+}
+
+const saveProduct = async (addAnother = false) => {
   if (saving.value) return // ikki marta submit bo‘lmasin
   resetMessages()
   if (!validate()) {
@@ -350,13 +410,24 @@ const saveProduct = async () => {
     }
 
     message.value = isCreate ? 'Mahsulot qo‘shildi.' : 'Mahsulot yangilandi.'
-    closeForm()
-    await loadProducts()
+    // "Saqlash va yana qo‘shish" faqat yaratishda — forma ochiq qoladi, kategoriya saqlanadi.
+    if (addAnother && isCreate) {
+      await loadProducts()
+      resetForNextEntry(payload.category_id)
+    } else {
+      closeForm()
+      await loadProducts()
+    }
   } catch (e: any) {
     handleError(e, 'Saqlashda xato.')
   } finally {
     saving.value = false
   }
+}
+
+// Import yakunlangach ro‘yxat va kategoriyalar yangilanadi (import yangi kategoriya ochishi mumkin).
+const onImported = async () => {
+  await Promise.all([loadProducts(), loadCategories()])
 }
 
 const toggleVisible = async (product: Product) => {
@@ -436,23 +507,35 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
       <div class="admin-actions">
         <button type="button" class="secondary-button" @click="downloadQr('png')">QR (PNG)</button>
         <button type="button" class="secondary-button" @click="downloadQr('svg')">QR (SVG)</button>
+        <button type="button" class="secondary-button" @click="showImport = true">Excel orqali</button>
         <button type="button" class="primary-button" @click="openCreate">+ Mahsulot</button>
       </div>
     </header>
 
-    <form v-if="showForm" class="admin-form product-form" @submit.prevent="saveProduct">
+    <AdminImportModal v-if="showImport" @close="showImport = false" @imported="onImported" />
+
+    <form v-if="showForm" class="admin-form product-form" @submit.prevent="saveProduct()">
       <div class="form-title">
         <strong>{{ editingId === null ? 'Yangi mahsulot' : 'Mahsulotni tahrirlash' }}</strong>
         <button type="button" class="link-button" @click="closeForm">Bekor qilish</button>
       </div>
 
-      <!-- Asosiy ma'lumotlar -->
+      <!-- Asosiy ma'lumotlar — yangi mahsulotni shu 4 maydon bilan saqlash mumkin. -->
       <fieldset class="form-group">
         <legend>Asosiy ma’lumotlar</legend>
         <div class="group-grid">
           <label class="span2">Mahsulot nomi
-            <input v-model.trim="form.name" required :aria-invalid="!!fieldErrors.name">
+            <input ref="nameInput" v-model.trim="form.name" required :aria-invalid="!!fieldErrors.name">
             <small v-if="fieldErrors.name" class="field-error">{{ fieldErrors.name }}</small>
+          </label>
+
+          <label>Narx
+            <span class="num-input">
+              <input :value="formatAmountInput(form.price)" @input="onAmountInput($event, 'price')" type="text" inputmode="numeric" required :aria-invalid="!!fieldErrors.price">
+              <span class="suffix">so‘m</span>
+            </span>
+            <small v-if="fieldErrors.price" class="field-error">{{ fieldErrors.price }}</small>
+            <small v-else-if="pricePreview" class="field-hint">{{ pricePreview }}</small>
           </label>
 
           <label>Kategoriya
@@ -470,42 +553,6 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
               <NuxtLink to="/admin/categories" class="inline-link">Kategoriyalar sahifasi</NuxtLink>.
             </small>
           </label>
-
-          <label>Mavjudlik holati
-            <select v-model="form.availability">
-              <option v-for="opt in AVAILABILITY_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-            </select>
-            <small class="field-hint">{{ availabilityHint }}</small>
-          </label>
-
-          <label>Narx
-            <span class="num-input">
-              <input :value="formatAmountInput(form.price)" @input="onAmountInput($event, 'price')" type="text" inputmode="numeric" required :aria-invalid="!!fieldErrors.price">
-              <span class="suffix">so‘m</span>
-            </span>
-            <small v-if="fieldErrors.price" class="field-error">{{ fieldErrors.price }}</small>
-            <small v-else-if="pricePreview" class="field-hint">{{ pricePreview }}</small>
-          </label>
-
-          <label>Eski narx (ixtiyoriy)
-            <span class="num-input">
-              <input :value="formatAmountInput(form.old_price)" @input="onAmountInput($event, 'old_price')" type="text" inputmode="numeric" placeholder="chegirma uchun">
-              <span class="suffix">so‘m</span>
-            </span>
-            <small v-if="oldPriceWarning" class="field-warning">{{ oldPriceWarning }}</small>
-            <small v-else-if="discountPreview" class="field-ok">Chegirma: {{ discountPreview }}</small>
-          </label>
-        </div>
-      </fieldset>
-
-      <!-- Tavsif va xususiyatlar -->
-      <fieldset class="form-group">
-        <legend>Tavsif va xususiyatlar</legend>
-        <div class="group-grid">
-          <label class="span2">Tavsif<textarea v-model.trim="form.description" rows="3"></textarea></label>
-          <label>Material<input v-model.trim="form.material"></label>
-          <label>O‘lchamlari<input v-model.trim="form.dimensions"></label>
-          <label>Rangi<input v-model.trim="form.color" maxlength="60"></label>
         </div>
       </fieldset>
 
@@ -538,9 +585,34 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
         </div>
       </fieldset>
 
+      <!-- Qo'shimcha ma'lumotlar (yopiq holda) — asosiy maydonlarni yengil qoldirish uchun. -->
+      <details class="advanced" :open="moreOpen" @toggle="moreOpen = ($event.target as HTMLDetailsElement).open">
+        <summary>Qo‘shimcha ma’lumotlar{{ filledLabel(moreFilledCount) }}</summary>
+        <div class="advanced-grid">
+          <label class="span2">Tavsif<textarea v-model.trim="form.description" rows="3"></textarea></label>
+          <label>Material<input v-model.trim="form.material"></label>
+          <label>O‘lchamlari<input v-model.trim="form.dimensions"></label>
+          <label>Rangi<input v-model.trim="form.color" maxlength="60"></label>
+          <label>Mavjudlik holati
+            <select v-model="form.availability">
+              <option v-for="opt in AVAILABILITY_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            </select>
+            <small class="field-hint">{{ availabilityHint }}</small>
+          </label>
+          <label>Eski narx (ixtiyoriy)
+            <span class="num-input">
+              <input :value="formatAmountInput(form.old_price)" @input="onAmountInput($event, 'old_price')" type="text" inputmode="numeric" placeholder="chegirma uchun">
+              <span class="suffix">so‘m</span>
+            </span>
+            <small v-if="oldPriceWarning" class="field-warning">{{ oldPriceWarning }}</small>
+            <small v-else-if="discountPreview" class="field-ok">Chegirma: {{ discountPreview }}</small>
+          </label>
+        </div>
+      </details>
+
       <!-- Qo'shimcha sozlamalar (texnik maydonlar yashirin) -->
-      <details class="advanced">
-        <summary>Qo‘shimcha sozlamalar</summary>
+      <details class="advanced" :open="advancedOpen" @toggle="advancedOpen = ($event.target as HTMLDetailsElement).open">
+        <summary>Qo‘shimcha sozlamalar{{ filledLabel(advancedFilledCount) }}</summary>
         <div class="advanced-grid">
           <label>Slug (nomdan avtomatik)
             <input v-model.trim="form.slug" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required @input="slugTouched = true">
@@ -558,6 +630,13 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
         <button class="primary-button" type="submit" :disabled="saving">
           {{ uploading ? 'Rasm yuklanmoqda…' : saving ? 'Saqlanmoqda…' : editingId === null ? 'Saqlash' : 'O‘zgarishlarni saqlash' }}
         </button>
+        <button
+          v-if="editingId === null"
+          type="button"
+          class="secondary-button"
+          :disabled="saving"
+          @click="saveProduct(true)"
+        >Saqlash va yana qo‘shish</button>
         <button type="button" class="secondary-button" @click="closeForm">Bekor qilish</button>
       </div>
     </form>
@@ -574,16 +653,33 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
       <button type="button" class="primary-button" @click="openCreate">+ Birinchi mahsulot</button>
     </div>
 
+    <!-- Ro'yxat filtri: rasmsiz mahsulotlarni ajratib ko'rish. -->
+    <div v-if="products.length" class="list-toolbar">
+      <button type="button" class="filter-chip" :class="{ active: !onlyMissingImage }" @click="onlyMissingImage = false">
+        Hammasi ({{ products.length }})
+      </button>
+      <button
+        type="button"
+        class="filter-chip"
+        :class="{ active: onlyMissingImage }"
+        :disabled="missingImageCount === 0"
+        @click="onlyMissingImage = true"
+      >Rasmsiz: {{ missingImageCount }} ta</button>
+    </div>
+
     <!-- Keng ekran: jadval -->
     <section v-if="products.length" class="admin-table-wrap desktop-only">
       <table class="admin-table">
         <thead><tr><th>Mahsulot</th><th>Kategoriya</th><th>Narx</th><th>Holati</th><th>Ko‘rinish</th><th>Amallar</th></tr></thead>
         <tbody>
-          <tr v-for="product in products" :key="product.id" :class="{ 'row-hidden': !product.is_visible }">
+          <tr v-for="product in visibleProducts" :key="product.id" :class="{ 'row-hidden': !product.is_visible }">
             <td>
               <div class="table-product">
                 <ProductImage :src="product.image_url" :alt="product.name" class="thumb" />
-                <div><strong>{{ product.name }}</strong><small>{{ product.slug }}</small></div>
+                <div>
+                  <strong>{{ product.name }}</strong><small>{{ product.slug }}</small>
+                  <span v-if="!product.image_url" class="badge badge-noimg">Rasm yo‘q</span>
+                </div>
               </div>
             </td>
             <td>{{ product.category?.name || '—' }}</td>
@@ -608,7 +704,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
 
     <!-- Mobil: kartalar (360px da ishlaydi) -->
     <section v-if="products.length" class="product-cards mobile-only">
-      <article v-for="product in products" :key="product.id" class="p-card" :class="{ 'row-hidden': !product.is_visible }">
+      <article v-for="product in visibleProducts" :key="product.id" class="p-card" :class="{ 'row-hidden': !product.is_visible }">
         <div class="p-card-top">
           <ProductImage :src="product.image_url" :alt="product.name" class="thumb" />
           <div class="p-card-info">
@@ -620,6 +716,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
         <div class="p-card-tags">
           <AvailabilityBadge :availability="product.availability" />
           <span v-if="!product.is_visible" class="badge badge-hidden">Yashirilgan</span>
+          <span v-if="!product.image_url" class="badge badge-noimg">Rasm yo‘q</span>
         </div>
         <div class="p-card-actions">
           <button type="button" class="secondary-button" @click="openEdit(product)">Tahrirlash</button>
@@ -646,7 +743,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
   color: var(--accent-dark); padding: 0 8px;
 }
 .group-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.group-grid .span2 { grid-column: 1 / -1; }
+.group-grid .span2, .advanced-grid .span2 { grid-column: 1 / -1; }
 .group-grid label, .advanced-grid label { display: grid; gap: 6px; font-weight: 700; align-content: start; }
 
 /* Narx inputi + suffix. */
@@ -712,6 +809,18 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
 .badge { display: inline-flex; padding: 5px 10px; border-radius: 999px; font-size: .72rem; font-weight: 800; }
 .badge-visible { background: #e8f3ed; color: var(--success); }
 .badge-hidden { background: #f3e2e2; color: #a32323; }
+.badge-noimg { background: #fbf3e2; color: #8a6a1f; }
+.table-product > div { display: grid; gap: 2px; justify-items: start; }
+.table-product .badge-noimg { margin-top: 2px; }
+
+/* Ro'yxat filtri (rasmli/rasmsiz). */
+.list-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.filter-chip {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 999px;
+  padding: 8px 16px; font-weight: 750; cursor: pointer; min-height: 40px;
+}
+.filter-chip.active { border-color: var(--accent); background: #f6efe4; color: var(--accent-dark); }
+.filter-chip:disabled { opacity: .5; cursor: not-allowed; }
 .row-hidden { opacity: .55; }
 .row-hidden td:first-child::after { content: ' · yashirilgan'; color: var(--muted); font-size: .75rem; }
 
@@ -732,6 +841,8 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
   .desktop-only { display: none; }
   .mobile-only { display: grid; }
   .group-grid, .advanced-grid { grid-template-columns: 1fr; }
+  /* Telefonda barmoq uchun qulay: inputlar kamida 44px balandlikda. */
+  .product-form input, .product-form select { min-height: 44px; }
   /* Uzoq forma: action tugmalari mobil ekranda sticky footer. */
   .product-form .form-buttons {
     position: sticky; bottom: 0; z-index: 5;
