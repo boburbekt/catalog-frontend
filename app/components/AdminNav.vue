@@ -3,7 +3,7 @@
 const props = withDefaults(defineProps<{ newOrders?: number }>(), { newOrders: 0 })
 
 const links = [
-  { to: '/admin', label: 'Mahsulotlar', icon: 'fa-couch', exact: true },
+  { to: '/admin', label: 'Mahsulotlar', icon: 'fa-box', exact: true },
   { to: '/admin/orders', label: 'Buyurtmalar', icon: 'fa-receipt', exact: false, badge: true },
   { to: '/admin/categories', label: 'Kategoriyalar', icon: 'fa-tags', exact: false },
   { to: '/admin/settings', label: 'Sozlamalar', icon: 'fa-gear', exact: false }

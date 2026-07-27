@@ -56,9 +56,9 @@ const siteUrl = (config.public.siteUrl as string).replace(/\/$/, '')
 const canonicalUrl = computed(() => `${siteUrl}/${shopSlug.value}`)
 const ogImage = computed(() => resolveMediaUrl(catalog.value?.business.logo_url) || undefined)
 const pageTitle = computed(() =>
-  catalog.value ? `${catalog.value.business.name} — onlayn katalog` : 'Mebel katalogi'
+  catalog.value ? `${catalog.value.business.name} — onlayn katalog` : 'Onlayn katalog'
 )
-const pageDescription = computed(() => catalog.value?.business.description || 'Mobil mebel katalogi')
+const pageDescription = computed(() => catalog.value?.business.description || 'Mobil onlayn katalog')
 
 useHead({
   link: [{ rel: 'canonical', href: canonicalUrl }]
@@ -89,25 +89,28 @@ useSeoMeta({
           <p>{{ catalog.business.description }}</p>
         </div>
       </div>
-      <a v-if="catalog.business.phone" class="primary-button" :href="`tel:${catalog.business.phone}`">Qo‘ng‘iroq qilish</a>
+      <a v-if="catalog.business.phone" class="primary-button" :href="`tel:${catalog.business.phone}`"><i class="fa-solid fa-phone" aria-hidden="true"></i> Qo‘ng‘iroq qilish</a>
     </header>
 
     <section class="hero shell">
       <div>
-        <span class="hero-kicker">Showroom katalogi</span>
-        <h2>Mebelingizni tanlang, tafsilotlarni ko‘ring va so‘rov yuboring.</h2>
+        <span class="hero-kicker"><i class="fa-solid fa-store" aria-hidden="true"></i> Onlayn katalog</span>
+        <h2>Mahsulotlarni tanlang, tafsilotlarni ko‘ring va so‘rov yuboring.</h2>
         <p>Telefon orqali tez ochiladi. Har bir mahsulotda narx, o‘lcham va material ko‘rsatilgan.</p>
       </div>
       <div class="hero-stat">
         <strong>{{ catalog.total }}</strong>
-        <span>mahsulot topildi</span>
+        <span><i class="fa-solid fa-box" aria-hidden="true"></i> mahsulot topildi</span>
       </div>
     </section>
 
     <section class="shell controls">
       <label class="search-box">
         <span>Qidiruv</span>
-        <input v-model.trim="searchInput" type="search" placeholder="Masalan: divan">
+        <span class="search-field">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input v-model.trim="searchInput" type="search" placeholder="Mahsulot nomi bo‘yicha qidiring">
+        </span>
       </label>
       <div class="category-list">
         <button :class="{ active: category === '' }" @click="category = ''">Barchasi</button>
@@ -128,18 +131,21 @@ useSeoMeta({
 
     <section v-if="hasMore" class="shell load-more">
       <button class="secondary-button" @click="limit += PAGE_SIZE">
+        <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
         Ko‘proq ko‘rsatish ({{ catalog.products.length }} / {{ catalog.total }})
       </button>
     </section>
 
     <section v-if="catalog.products.length === 0" class="empty-state shell">
+      <div class="empty-state-icon"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></div>
       <h3>Mahsulot topilmadi</h3>
       <p>Qidiruv yoki kategoriyani o‘zgartiring.</p>
     </section>
 
     <footer class="shell footer-bar">
-      <span>{{ catalog.business.address }}</span>
-      <a v-if="catalog.business.telegram_username" :href="`https://t.me/${catalog.business.telegram_username}`" target="_blank">Telegram</a>
+      <span v-if="catalog.business.address"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> {{ catalog.business.address }}</span>
+      <span v-else></span>
+      <a v-if="catalog.business.telegram_username" :href="`https://t.me/${catalog.business.telegram_username}`" target="_blank"><i class="fa-brands fa-telegram" aria-hidden="true"></i> Telegram</a>
     </footer>
   </main>
 

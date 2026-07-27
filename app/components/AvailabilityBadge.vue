@@ -3,10 +3,19 @@
 // ProductCard ham, mahsulot detali ham shu komponentni ishlatadi (if/else takrorlanmaydi).
 const props = defineProps<{ availability: string }>()
 const badge = computed(() => availabilityBadge(props.availability))
+
+// Har bir holat uchun ikonka — matn bilan birga ma'noni tezroq yetkazadi.
+const ICONS: Record<string, string> = {
+  in_stock: 'fa-circle-check',
+  preorder: 'fa-clock',
+  out_of_stock: 'fa-circle-xmark'
+}
+const icon = computed(() => ICONS[badge.value.variant] ?? 'fa-circle-info')
 </script>
 
 <template>
   <span class="availability-badge" :class="`availability-badge--${badge.variant}`">
+    <i class="fa-solid" :class="icon" aria-hidden="true"></i>
     {{ badge.label }}
   </span>
 </template>
@@ -15,6 +24,7 @@ const badge = computed(() => availabilityBadge(props.availability))
 .availability-badge {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   padding: 6px 11px;
   border-radius: 999px;
   font-size: 0.78rem;

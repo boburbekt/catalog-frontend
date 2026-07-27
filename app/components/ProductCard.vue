@@ -21,10 +21,10 @@ const discount = computed(() => discountLabel(props.product.price, props.product
     <div class="product-image-wrap">
       <ProductImage :src="props.product.image_url" :alt="props.product.name" class="product-image" />
       <AvailabilityBadge :availability="props.product.availability" class="card-availability" />
-      <span v-if="discount" class="discount-badge">{{ discount }}</span>
+      <span v-if="discount" class="discount-badge"><i class="fa-solid fa-tag" aria-hidden="true"></i> {{ discount }}</span>
     </div>
     <div class="product-card-body">
-      <span class="eyebrow">{{ props.product.category?.name || 'Mebel' }}</span>
+      <span class="eyebrow">{{ props.product.category?.name || 'Mahsulot' }}</span>
       <h3 class="product-name">{{ props.product.name }}</h3>
       <div class="price-row">
         <strong>{{ money(props.product.price) }}</strong>
@@ -65,6 +65,9 @@ const discount = computed(() => discountLabel(props.product.price, props.product
   position: absolute;
   right: 14px;
   top: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: #8f1d1d;
   color: #fff;
   border-radius: 999px;

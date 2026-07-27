@@ -41,7 +41,7 @@ watch(token, (value:any) => { if (value) refreshNewOrders() }, { immediate: true
     <div class="admin-topbar">
       <NuxtLink to="/admin" class="admin-brand">
         <span class="eyebrow">Boshqaruv paneli</span>
-        <strong>Mebel Catalog</strong>
+        <strong>Mini Katalog</strong>
       </NuxtLink>
       <button v-if="token" type="button" class="secondary-button" @click="signOut"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Chiqish</button>
     </div>

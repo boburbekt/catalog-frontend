@@ -1,5 +1,5 @@
 {
-  "name": "mebel-catalog-web",
+  "name": "catalog-web",
   "private": true,
   "type": "module",
   "scripts": {

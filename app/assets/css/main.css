@@ -59,6 +59,10 @@ img { display: block; max-width: 100%; }
 .search-box { display: grid; gap: 7px; font-weight: 700; }
 .search-box input { width: 100%; border: 1px solid var(--line); border-radius: 16px; padding: 15px 17px; background: var(--surface); outline: none; }
 .search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgb(150 109 63 / 15%); }
+/* Qidiruv maydoni — ichida lupa ikonkasi bilan. */
+.search-field { position: relative; display: block; }
+.search-field > i { position: absolute; left: 17px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.search-field input { padding-left: 44px; }
 .category-list { display: flex; gap: 9px; overflow-x: auto; padding-bottom: 4px; }
 .category-list button { white-space: nowrap; border: 1px solid var(--line); background: var(--surface); padding: 10px 16px; border-radius: 999px; }
 .category-list button.active { background: var(--ink); color: white; border-color: var(--ink); }
@@ -76,6 +80,13 @@ img { display: block; max-width: 100%; }
 .load-more { display: flex; justify-content: center; padding-bottom: 44px; }
 .footer-bar { border-top: 1px solid var(--line); padding-block: 24px 44px; display: flex; justify-content: space-between; color: var(--muted); }
 .empty-state, .state-page { padding-block: 80px; text-align: center; }
+.empty-state-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 72px; height: 72px; margin-bottom: 18px;
+  border-radius: 50%; background: var(--surface); border: 1px solid var(--line);
+  color: var(--accent-dark); font-size: 1.7rem;
+}
+.footer-bar span, .footer-bar a { display: inline-flex; align-items: center; gap: 8px; }
 
 .product-page { padding-block: 30px 70px; }
 .back-link { display: inline-block; color: var(--muted); margin-bottom: 24px; }

@@ -106,7 +106,7 @@ useSeoMeta({
 
 <template>
   <main v-if="product" class="product-page shell">
-    <NuxtLink :to="backTo" class="back-link">← Katalogga qaytish</NuxtLink>
+    <NuxtLink :to="backTo" class="back-link"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Katalogga qaytish</NuxtLink>
 
     <section class="product-detail">
       <div class="detail-image-wrap">
@@ -114,11 +114,11 @@ useSeoMeta({
       </div>
 
       <div class="detail-content">
-        <span class="eyebrow">{{ product.category?.name || 'Mebel' }}</span>
+        <span class="eyebrow">{{ product.category?.name || 'Mahsulot' }}</span>
         <h1>{{ product.name }}</h1>
         <div class="detail-badges">
           <AvailabilityBadge :availability="product.availability" />
-          <span v-if="discount" class="discount-badge">{{ discount }}</span>
+          <span v-if="discount" class="discount-badge"><i class="fa-solid fa-tag" aria-hidden="true"></i> {{ discount }}</span>
         </div>
         <p class="detail-description">{{ product.description }}</p>
         <div class="detail-price">
@@ -126,9 +126,9 @@ useSeoMeta({
           <del v-if="product.old_price">{{ money(product.old_price) }}</del>
         </div>
         <dl class="spec-list">
-          <div><dt>Material</dt><dd>{{ product.material || 'Ko‘rsatilmagan' }}</dd></div>
-          <div><dt>O‘lcham</dt><dd>{{ product.dimensions || 'Ko‘rsatilmagan' }}</dd></div>
-          <div><dt>Holati</dt><dd>{{ availabilityLabel(product.availability) }}</dd></div>
+          <div><dt><i class="fa-solid fa-layer-group" aria-hidden="true"></i> Material</dt><dd>{{ product.material || 'Ko‘rsatilmagan' }}</dd></div>
+          <div><dt><i class="fa-solid fa-ruler-combined" aria-hidden="true"></i> O‘lcham</dt><dd>{{ product.dimensions || 'Ko‘rsatilmagan' }}</dd></div>
+          <div><dt><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Holati</dt><dd>{{ availabilityLabel(product.availability) }}</dd></div>
         </dl>
       </div>
     </section>
@@ -136,7 +136,7 @@ useSeoMeta({
     <!-- out_of_stock: buyurtma formasi o‘rniga aniq tushuntirish. -->
     <section v-if="isOutOfStock" class="order-section out-of-stock-section">
       <div>
-        <span class="eyebrow">Hozircha mavjud emas</span>
+        <span class="eyebrow"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> Hozircha mavjud emas</span>
         <h2>Bu mahsulot hozir mavjud emas</h2>
         <p>
           Hozircha buyurtma qabul qilinmaydi. Mahsulot yana paydo bo‘lganda buyurtma berishingiz mumkin —
@@ -147,15 +147,15 @@ useSeoMeta({
 
     <section v-else class="order-section">
       <div>
-        <span class="eyebrow">Buyurtma</span>
+        <span class="eyebrow"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i> Buyurtma</span>
         <h2>Do‘kon siz bilan bog‘lanadi</h2>
         <p>Ism va telefon raqamingizni qoldiring. To‘lov hozir olinmaydi.</p>
       </div>
       <form class="order-form" @submit.prevent="submitOrder">
-        <label>Ismingiz<input v-model.trim="form.customer_name" required minlength="2" placeholder="Jasurbek"></label>
-        <label>Telefon<input :value="form.customer_phone" @input="onPhoneInput" type="tel" inputmode="tel" required minlength="7" placeholder="+998 90 123 45 67"></label>
-        <label>Miqdor<input v-model.number="form.quantity" required type="number" min="1" max="99"></label>
-        <label>Izoh<textarea v-model.trim="form.comment" rows="3" placeholder="Rang yoki yetkazib berish bo‘yicha savol"></textarea></label>
+        <label><span class="fld"><i class="fa-solid fa-user" aria-hidden="true"></i> Ismingiz</span><input v-model.trim="form.customer_name" required minlength="2" placeholder="Jasurbek"></label>
+        <label><span class="fld"><i class="fa-solid fa-phone" aria-hidden="true"></i> Telefon</span><input :value="form.customer_phone" @input="onPhoneInput" type="tel" inputmode="tel" required minlength="7" placeholder="+998 90 123 45 67"></label>
+        <label><span class="fld"><i class="fa-solid fa-hashtag" aria-hidden="true"></i> Miqdor</span><input v-model.number="form.quantity" required type="number" min="1" max="99"></label>
+        <label><span class="fld"><i class="fa-solid fa-comment" aria-hidden="true"></i> Izoh</span><textarea v-model.trim="form.comment" rows="3" placeholder="Rang yoki yetkazib berish bo‘yicha savol"></textarea></label>
 
         <!-- Honeypot: haqiqiy foydalanuvchi ko‘rmaydi va to‘ldirmaydi; bot to‘ldirsa buyurtma rad etiladi. -->
         <div class="hp-field" aria-hidden="true">
@@ -167,7 +167,10 @@ useSeoMeta({
           <span>Telefon raqamimni yuborish orqali buyurtma bo‘yicha men bilan bog‘lanishga roziman.</span>
         </label>
 
-        <button class="primary-button full" :disabled="sending || !form.consent">{{ sending ? 'Yuborilmoqda…' : 'Buyurtma yuborish' }}</button>
+        <button class="primary-button full" :disabled="sending || !form.consent">
+          <i class="fa-solid" :class="sending ? 'fa-spinner fa-spin' : 'fa-paper-plane'" aria-hidden="true"></i>
+          {{ sending ? 'Yuborilmoqda…' : 'Buyurtma yuborish' }}
+        </button>
         <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
         <p v-if="formError" class="error-message">{{ formError }}</p>
       </form>
@@ -213,6 +216,7 @@ useSeoMeta({
 .discount-badge {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   background: #8f1d1d;
   color: #fff;
   border-radius: 999px;
@@ -223,5 +227,25 @@ useSeoMeta({
 }
 .out-of-stock-section {
   grid-template-columns: 1fr;
+}
+
+/* Buyurtma formasi maydon yorlig‘i — ikonka + matn. */
+.order-form .fld {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.order-form .fld i {
+  color: var(--accent-dark);
+  width: 16px;
+  text-align: center;
+}
+
+/* Spec ro‘yxati yorliqlaridagi ikonka. */
+.spec-list dt i {
+  color: var(--accent-dark);
+  width: 18px;
+  text-align: center;
+  margin-right: 2px;
 }
 </style>

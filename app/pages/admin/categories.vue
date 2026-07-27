@@ -311,7 +311,7 @@ onMounted(() => {
       <div class="empty-icon"><i class="fa-solid fa-tags" aria-hidden="true"></i></div>
       <h3>Hozircha kategoriya yo‘q</h3>
       <p>
-        Birinchi bo‘limingizni qo‘shing — masalan “Divanlar” yoki “Stollar”.
+        Birinchi bo‘limingizni qo‘shing — masalan “Yangi kelganlar” yoki “Chegirmalar”.
       </p>
       <button type="button" class="primary-button" @click="openCreate">
         <i class="fa-solid fa-plus" aria-hidden="true"></i> Birinchi kategoriya

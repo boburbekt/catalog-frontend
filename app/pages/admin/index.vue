@@ -650,7 +650,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
 
     <!-- Bo'sh holat -->
     <div v-if="!loading && products.length === 0" class="empty-box">
-      <div class="empty-icon"><i class="fa-solid fa-couch" aria-hidden="true"></i></div>
+      <div class="empty-icon"><i class="fa-solid fa-box-open" aria-hidden="true"></i></div>
       <h3>Hozircha mahsulot yo‘q</h3>
       <p>Birinchi mahsulotingizni qo‘shing — 1–2 daqiqada tayyor bo‘ladi.</p>
       <button type="button" class="primary-button" @click="openCreate"><i class="fa-solid fa-plus" aria-hidden="true"></i> Birinchi mahsulot</button>
