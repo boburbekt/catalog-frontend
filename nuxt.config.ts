@@ -3,6 +3,9 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
+    // SSR ichidagi so'rovlar uchun ichki manzil (prodda http://backend:8000/api).
+    // Bo'sh bo'lsa public.apiBase ishlatiladi — lokal dev shu holatda qoladi.
+    apiInternalBase: process.env.NUXT_API_INTERNAL_BASE || '',
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8000/api',
       mediaBase: process.env.NUXT_PUBLIC_MEDIA_BASE || 'http://localhost:8000',

@@ -18,7 +18,8 @@ const xmlEscape = (value: string): string =>
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
-  const apiBase = (config.public.apiBase as string).replace(/\/$/, '')
+  // Server route — backendga ichki tarmoq orqali boramiz (prodda http://backend:8000/api).
+  const apiBase = ((config.apiInternalBase as string) || (config.public.apiBase as string)).replace(/\/$/, '')
   const siteUrl = (config.public.siteUrl as string).replace(/\/$/, '')
 
   const urls: { loc: string, lastmod: string }[] = []

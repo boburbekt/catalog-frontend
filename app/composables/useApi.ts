@@ -16,13 +16,27 @@ export const useAdminToken = () => {
 }
 
 /**
+ * So‘rov qaysi manzilga ketishi.
+ *
+ * SSR paytida (Nitro konteyneri ichida) backendga to‘g‘ridan-to‘g‘ri ichki tarmoq orqali
+ * boramiz — public domen bo‘ylab aylanib, o‘z reverse-proxy'imizga qaytish shart emas.
+ * Brauzerda esa faqat public manzil ishlaydi. `apiInternalBase` bo‘sh bo‘lsa (lokal dev)
+ * ikkalasi ham public.apiBase.
+ */
+const apiBaseUrl = () => {
+  const config = useRuntimeConfig()
+  return import.meta.server && config.apiInternalBase
+    ? config.apiInternalBase
+    : config.public.apiBase
+}
+
+/**
  * Public API — katalog, mahsulot va buyurtma sahifalari uchun.
  * X-Admin-Token HECH QACHON yuborilmaydi, hatto brauzerda admin cookie mavjud bo‘lsa ham.
  */
 export const usePublicApi = () => {
-  const config = useRuntimeConfig()
   return $fetch.create({
-    baseURL: config.public.apiBase,
+    baseURL: apiBaseUrl(),
     headers: { Accept: 'application/json' }
   })
 }
@@ -32,11 +46,10 @@ export const usePublicApi = () => {
  * Har so‘rovga cookie'dagi admin token X-Admin-Token sifatida qo‘shiladi.
  */
 export const useAdminApi = () => {
-  const config = useRuntimeConfig()
   const adminToken = useAdminToken()
 
   return $fetch.create({
-    baseURL: config.public.apiBase,
+    baseURL: apiBaseUrl(),
     headers: { Accept: 'application/json' },
     onRequest({ options }) {
       if (!adminToken.value) return
