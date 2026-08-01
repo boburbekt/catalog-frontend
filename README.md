@@ -1,11 +1,20 @@
 # Mebel Catalog Web
 
-Ko‘p ijarali (multi-tenant) mebel katalogi uchun frontend.
+![Nuxt](https://img.shields.io/badge/Nuxt_4-00DC82?style=flat-square&logo=nuxtdotjs&logoColor=white)
+![Vue](https://img.shields.io/badge/Vue_3-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Tailwind](https://img.shields.io/badge/Tailwind-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
 
-- Nuxt 4 + Vue 3 + TypeScript
-- Mobil-birinchi katalog, mahsulot sahifasi, buyurtma formasi va demo admin sahifasi
-- Keyinchalik shu URL Telegram Mini App ichida ochiladi
-- Backend alohida repoda: [catalog-backend](https://github.com/boburbekt/catalog-backend)
+Mobile-first storefront and admin panel for a multi-tenant furniture catalog. Server-rendered public pages for SEO, client-only admin area, designed to run inside a Telegram Mini App.
+
+**Highlights**
+- ⚡ SSR catalog and product pages with canonical / OG / Twitter meta
+- 🔎 Server-side search (debounced) and category filtering
+- 🗺️ Dynamic sitemap.xml and robots.txt generated from the API
+- 🔐 Split API layer — usePublicApi() vs useAdminApi() (token never leaks to public calls)
+- 🧩 Single source of truth for API types in app/types/api.ts
+
+**Backend:** [catalog-backend](https://github.com/boburbekt/catalog-backend)
 
 ## 1. Ishga tushirish
 
@@ -71,11 +80,11 @@ Formatlash helperlari (Nuxt avtomatik import): `app/composables/format.ts` (`mon
 
 Katalog sahifasida qidiruv (300–500 ms debounce) va kategoriya filtri serverda bajariladi.
 
-## 5. Docker
+## 7. Docker
 
 `Dockerfile` deploy uchun mavjud. Frontend'ni konteynerda, backend'ni hostda ishlatganda `NUXT_PUBLIC_API_BASE` bitta qiymat bilan ikkalasiga to‘g‘ri kelmaydi (SSR konteyner ichidan, brauzer esa hostdan chaqiradi), shuning uchun lokal ishlab chiqishda `npm run dev` tavsiya etiladi.
 
-## 6. Keyingi ishlar
+## 8. Keyingi ishlar
 
 - Admin autentifikatsiyasi
 - Rasm yuklash
