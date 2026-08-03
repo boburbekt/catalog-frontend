@@ -63,9 +63,20 @@ img { display: block; max-width: 100%; }
 .search-field { position: relative; display: block; }
 .search-field > i { position: absolute; left: 17px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
 .search-field input { padding-left: 44px; }
-.category-list { display: flex; gap: 9px; overflow-x: auto; padding-bottom: 4px; }
+/* Kategoriya chiplari qatori: scrollbar yashirilgan, chetlarida fade ::before/::after bilan. */
+.category-scroller { position: relative; min-width: 0; }
+.category-list { display: flex; gap: 9px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+.category-list::-webkit-scrollbar { display: none; }
 .category-list button { white-space: nowrap; border: 1px solid var(--line); background: var(--surface); padding: 10px 16px; border-radius: 999px; }
 .category-list button.active { background: var(--ink); color: white; border-color: var(--ink); }
+.category-scroller::before, .category-scroller::after {
+  content: ''; position: absolute; top: 0; bottom: 4px; width: 32px;
+  pointer-events: none; opacity: 0; transition: opacity .15s ease; z-index: 1;
+}
+.category-scroller::before { left: 0; background: linear-gradient(90deg, var(--bg), transparent); }
+.category-scroller::after { right: 0; background: linear-gradient(270deg, var(--bg), transparent); }
+.category-scroller.fade-start::before { opacity: 1; }
+.category-scroller.fade-end::after { opacity: 1; }
 .product-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; padding-block: 12px 50px; }
 .product-card { background: var(--surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); transition: transform .18s ease, box-shadow .18s ease; }
 .product-card:hover { transform: translateY(-4px); box-shadow: 0 18px 45px rgb(34 27 18 / 10%); }

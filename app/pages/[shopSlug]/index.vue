@@ -11,6 +11,9 @@ const searchInput = ref('')
 const search = ref('')
 const category = ref('')
 const limit = ref(PAGE_SIZE)
+const categoryScrollerRef = ref<HTMLElement | null>(null)
+const fadeStart = ref(false)
+const fadeEnd = ref(false)
 const shopSlug = computed(() => String(route.params.shopSlug))
 // QR/reklama manbasi — mahsulot havolalari va tashrif eventida saqlanadi.
 const source = computed(() => (route.query.source as string) || undefined)
@@ -23,6 +26,19 @@ watch(searchInput, (value) => {
   debounceTimer = setTimeout(() => { search.value = value }, SEARCH_DEBOUNCE_MS)
 })
 onBeforeUnmount(() => clearTimeout(debounceTimer))
+
+// Kategoriya chiplari qatori scroll bo‘lsa, chetlariga fade ko‘rsatish uchun.
+function updateFades() {
+  const el = categoryScrollerRef.value
+  if (!el) return
+  fadeStart.value = el.scrollLeft > 4
+  fadeEnd.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 4
+}
+onMounted(() => {
+  nextTick(updateFades)
+  window.addEventListener('resize', updateFades)
+})
+onBeforeUnmount(() => window.removeEventListener('resize', updateFades))
 
 // Filtr o‘zgarganda ro‘yxat boshidan boshlansin.
 watch([category, search], () => { limit.value = PAGE_SIZE })
@@ -112,16 +128,18 @@ useSeoMeta({
           <input v-model.trim="searchInput" type="search" placeholder="Mahsulot nomi bo‘yicha qidiring">
         </span>
       </label>
-      <div class="category-list">
-        <button :class="{ active: category === '' }" @click="category = ''">Barchasi</button>
-        <button
-          v-for="item in catalog.business.categories"
-          :key="item.id"
-          :class="{ active: category === item.slug }"
-          @click="category = item.slug"
-        >
-          {{ item.name }}
-        </button>
+      <div class="category-scroller" :class="{ 'fade-start': fadeStart, 'fade-end': fadeEnd }">
+        <div ref="categoryScrollerRef" class="category-list" @scroll="updateFades">
+          <button :class="{ active: category === '' }" @click="category = ''">Barchasi</button>
+          <button
+            v-for="item in catalog.business.categories"
+            :key="item.id"
+            :class="{ active: category === item.slug }"
+            @click="category = item.slug"
+          >
+            {{ item.name }}
+          </button>
+        </div>
       </div>
     </section>
 
