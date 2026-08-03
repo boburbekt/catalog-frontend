@@ -13,6 +13,14 @@ Mobile-first storefront and admin panel for a multi-tenant furniture catalog. Se
 
 **Backend:** [catalog-backend](https://github.com/boburbekt/catalog-backend)
 
+## Screenshots
+
+> The UI is in Uzbek — the product targets furniture retailers in Uzbekistan.
+
+| Catalog (mobile) | Product page (mobile) |
+| --- | --- |
+| <img src="docs/screenshots/catalog.png" width="280"> | <img src="docs/screenshots/product.png" width="280"> |
+
 ## 1. Getting started
 
 Start the backend first ([catalog-backend](https://github.com/boburbekt/catalog-backend) repo, docker compose up --build), then:
